@@ -1,12 +1,11 @@
 // api/chat.js
-// Vercel Serverless API - Ultra-Resilient Multi-Provider Engine (Gemini + Groq + OpenRouter)
+// Vercel Serverless API - Multi-Provider Engine (Gemini + Groq + OpenRouter)
 
 const DEFAULT_SYSTEM = `You are TalentTrack AI, an elite enterprise Talent Acquisition, Sourcing & Immigration Intelligence assistant.
 Always structure your responses cleanly, professionally, and comprehensively.
 Never output raw markdown artifacts like '#---' or '***'. Use clean headers, bold sub-topics, bullet points, and numbered lists.
 Do NOT truncate answers midway — complete every generated output in full detail.`;
 
-// 100% Active Free Model Candidates
 const GEMINI_MODELS = [
   'gemini-1.5-flash',
   'gemini-1.5-flash-8b',
@@ -21,7 +20,6 @@ const GROQ_MODELS = [
   'llama-3.3-70b-versatile'
 ];
 
-// Active OpenRouter Free Slugs
 const OPENROUTER_MODELS = [
   'google/gemini-2.0-flash-lite-preview-02-05:free',
   'google/gemini-2.0-flash-exp:free',
@@ -124,8 +122,6 @@ export default async function handler(req, res) {
         errors.push(`Gemini (${model}): ${err.message}`);
       }
     }
-  } else {
-    errors.push('Gemini: GEMINI_API_KEY not configured in Vercel Environment Variables.');
   }
 
   // Provider 2: Groq Direct
@@ -151,8 +147,6 @@ export default async function handler(req, res) {
         errors.push(`Groq (${model}): ${err.message}`);
       }
     }
-  } else {
-    errors.push('Groq: GROQ_API_KEY not configured in Vercel Environment Variables.');
   }
 
   // Provider 3: OpenRouter Free Models
@@ -179,12 +173,10 @@ export default async function handler(req, res) {
         errors.push(`OpenRouter (${model}): ${err.message}`);
       }
     }
-  } else {
-    errors.push('OpenRouter: OPENROUTER_API_KEY not configured in Vercel Environment Variables.');
   }
 
   res.status(502).json({
-    error: 'All AI providers failed or exceeded quota. Please verify environment variables or try again in a moment.',
+    error: 'All AI providers failed or exceeded quota.',
     details: errors
   });
 }
