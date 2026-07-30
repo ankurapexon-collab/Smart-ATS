@@ -116,23 +116,20 @@ module.exports = async function handler(req, res) {
 
   try {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') { res.status(200).end(); return; }
-    if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed. Use POST.' }); return; }
 
-    let body = req.body || {};
-    if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
-
-    const { system, prompt } = body;
-    if (!prompt) { res.status(400).json({ error: 'Missing "prompt" in request body.' }); return; }
-
-    const groqKey = process.env.GROQ_API_KEY;
-    const cerebrasKey = process.env.CEREBRAS_API_KEY;
-    const openrouterKey = process.env.OPENROUTER_API_KEY;
-    const sambanovaKey = process.env.SAMBANOVA_API_KEY;
-    const geminiKey = process.env.GEMINI_API_KEY;
+    // Trim every key defensively — a trailing newline or space from copy-paste
+    // (very easy to do by accident from a browser or terminal) makes a key
+    // invalid in a way that looks identical to "wrong key" but is much
+    // harder to notice just by looking at it.
+    const groqKey = (process.env.GROQ_API_KEY || '').trim() || undefined;
+    const cerebrasKey = (process.env.CEREBRAS_API_KEY || '').trim() || undefined;
+    const openrouterKey = (process.env.OPENROUTER_API_KEY || '').trim() || undefined;
+    const sambanovaKey = (process.env.SAMBANOVA_API_KEY || '').trim() || undefined;
+    const geminiKey = (process.env.GEMINI_API_KEY || '').trim() || undefined;
 
     const activeKeys = {
       GROQ_API_KEY: !!groqKey,
@@ -142,9 +139,33 @@ module.exports = async function handler(req, res) {
       GEMINI_API_KEY: !!geminiKey,
     };
 
+    // GET /api/chat — visit this URL directly in your browser any time to
+    // instantly check which keys Vercel currently sees, with zero AI calls
+    // made and zero quota spent. This is the fastest way to confirm whether
+    // a redeploy actually picked up new environment variables.
+    if (req.method === 'GET') {
+      const anyKey = Object.values(activeKeys).some(Boolean);
+      res.status(200).json({
+        status: 'diagnostic',
+        message: anyKey
+          ? 'At least one API key is detected by this deployment. If AI requests still fail, the key itself may be invalid/expired — see per-provider errors in a real POST request.'
+          : 'NO API keys are detected by this deployment. Either none are set in Vercel, or they were added/changed after the last deploy and you have not redeployed since. Add a key in Vercel > Settings > Environment Variables, then go to Deployments > (latest) > "..." > Redeploy.',
+        activeKeys,
+      });
+      return;
+    }
+
+    if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed. Use POST for AI requests, or GET for a diagnostic check.' }); return; }
+
+    let body = req.body || {};
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
+
+    const { system, prompt } = body;
+    if (!prompt) { res.status(400).json({ error: 'Missing "prompt" in request body.' }); return; }
+
     if (!groqKey && !cerebrasKey && !openrouterKey && !sambanovaKey && !geminiKey) {
       res.status(400).json({
-        error: 'No API keys detected in Vercel Environment Variables. Set at least GROQ_API_KEY (recommended — fastest free tier) in Vercel and redeploy.',
+        error: 'No API keys detected in Vercel Environment Variables. Set at least GROQ_API_KEY (recommended — fastest free tier) in Vercel, then redeploy. Visit this same URL with GET (just paste it in your browser) any time to check key status without spending quota.',
         activeKeys,
       });
       return;
@@ -249,7 +270,10 @@ module.exports = async function handler(req, res) {
     }
 
     res.status(502).json({
-      error: 'All configured AI providers failed, timed out, or ran out of time budget. Add GROQ_API_KEY for the fastest free option if you haven\'t already.',
+      error: 'All configured AI providers failed, timed out, or ran out of time budget. ' +
+        'Open this exact URL in your browser (GET request, no quota used) to see which keys are actually detected right now: ' +
+        '/api/chat — if it shows no keys detected, you added them in Vercel but have not redeployed since. ' +
+        'If keys ARE detected but this still fails, check the "details" list below for the specific reason each provider rejected the request (commonly: invalid/expired key, or free-tier daily limit reached).',
       activeKeys,
       elapsedMs: Date.now() - startTime,
       details: errors,
