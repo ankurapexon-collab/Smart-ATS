@@ -1,12 +1,12 @@
 // api/chat.js
-// Vercel Serverless API - Ultra-Resilient Multi-Provider Engine (Gemini + Groq + OpenRouter)
+// Vercel Serverless API - 5-Provider Ultra-Resilient Engine (Gemini + Cerebras + Groq + SambaNova + OpenRouter)
 
 const DEFAULT_SYSTEM = `You are TalentTrack AI, an elite enterprise Talent Acquisition, Sourcing & Immigration Intelligence assistant.
 Always structure your responses cleanly, professionally, and comprehensively.
 Never output raw markdown artifacts like '#---' or '***'. Use clean headers, bold sub-topics, bullet points, and numbered lists.
 Do NOT truncate answers midway — complete every generated output in full detail.`;
 
-// 100% Active Free Model Candidates
+// Tier 1: Gemini Direct (10 Lakhs Tokens/Min Free)
 const GEMINI_MODELS = [
   'gemini-1.5-flash',
   'gemini-1.5-flash-8b',
@@ -14,6 +14,13 @@ const GEMINI_MODELS = [
   'gemini-1.5-pro'
 ];
 
+// Tier 2: Cerebras Inference (1,000,000 Free Tokens/Day - Ultra-fast 2000+ tok/sec)
+const CEREBRAS_MODELS = [
+  'llama3.1-8b',
+  'llama3.3-70b'
+];
+
+// Tier 3: Groq Direct (500,000 Free Tokens/Day)
 const GROQ_MODELS = [
   'llama-3.1-8b-instant',
   'gemma2-9b-it',
@@ -21,7 +28,13 @@ const GROQ_MODELS = [
   'llama-3.3-70b-versatile'
 ];
 
-// Active OpenRouter Free Slugs
+// Tier 4: SambaNova Systems (High-Capacity Free Tier)
+const SAMBANOVA_MODELS = [
+  'Meta-Llama-3.3-70B-Instruct',
+  'Meta-Llama-3.1-8B-Instruct'
+];
+
+// Tier 5: OpenRouter Verified Active Free Models (NO paid deepseek-r1)
 const OPENROUTER_MODELS = [
   'google/gemini-2.0-flash-lite-preview-02-05:free',
   'google/gemini-2.0-flash-exp:free',
@@ -73,7 +86,6 @@ async function callOpenAIStyle(endpoint, modelName, apiKey, system, prompt, extr
   return { ok: res.ok, status: res.status, data };
 }
 
-// NATIVE VERCEL COMMONJS HANDLER (Prevents ESM Warning)
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -96,19 +108,30 @@ module.exports = async function handler(req, res) {
   }
 
   const geminiKey = process.env.GEMINI_API_KEY;
+  const cerebrasKey = process.env.CEREBRAS_API_KEY;
   const groqKey = process.env.GROQ_API_KEY;
+  const sambanovaKey = process.env.SAMBANOVA_API_KEY;
   const openrouterKey = process.env.OPENROUTER_API_KEY;
 
-  if (!geminiKey && !groqKey && !openrouterKey) {
+  const activeKeys = {
+    GEMINI_API_KEY: !!geminiKey,
+    CEREBRAS_API_KEY: !!cerebrasKey,
+    GROQ_API_KEY: !!groqKey,
+    SAMBANOVA_API_KEY: !!sambanovaKey,
+    OPENROUTER_API_KEY: !!openrouterKey
+  };
+
+  if (!geminiKey && !cerebrasKey && !groqKey && !sambanovaKey && !openrouterKey) {
     res.status(500).json({
-      error: 'No API keys configured. Set GEMINI_API_KEY, GROQ_API_KEY, or OPENROUTER_API_KEY in Vercel Environment Variables.'
+      error: 'No API keys configured. Set GEMINI_API_KEY, CEREBRAS_API_KEY, GROQ_API_KEY, SAMBANOVA_API_KEY, or OPENROUTER_API_KEY in Vercel Environment Variables.',
+      activeKeys
     });
     return;
   }
 
   let errors = [];
 
-  // Provider 1: Google Gemini Direct
+  // 1. Provider 1: Gemini Direct (10 Lakhs Tokens/Min Free)
   if (geminiKey) {
     for (const model of GEMINI_MODELS) {
       try {
@@ -116,7 +139,7 @@ module.exports = async function handler(req, res) {
         if (ok) {
           const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
           if (text) {
-            res.status(200).json({ text, modelUsed: `gemini/${model}` });
+            res.status(200).json({ text, modelUsed: `gemini/${model}`, activeKeys });
             return;
           }
         }
@@ -126,10 +149,37 @@ module.exports = async function handler(req, res) {
       }
     }
   } else {
-    errors.push('Gemini: GEMINI_API_KEY not configured in Vercel Environment Variables.');
+    errors.push('Gemini: GEMINI_API_KEY not set in Vercel Environment Variables.');
   }
 
-  // Provider 2: Groq Direct
+  // 2. Provider 2: Cerebras AI (1,000,000 Tokens/Day Free)
+  if (cerebrasKey) {
+    for (const model of CEREBRAS_MODELS) {
+      try {
+        const { ok, data } = await callOpenAIStyle(
+          'https://api.cerebras.ai/v1/chat/completions',
+          model,
+          cerebrasKey,
+          system,
+          prompt
+        );
+        if (ok) {
+          const text = data?.choices?.[0]?.message?.content?.trim();
+          if (text) {
+            res.status(200).json({ text, modelUsed: `cerebras/${model}`, activeKeys });
+            return;
+          }
+        }
+        errors.push(`Cerebras (${model}): ${data?.error?.message || 'Failed'}`);
+      } catch (err) {
+        errors.push(`Cerebras (${model}): ${err.message}`);
+      }
+    }
+  } else {
+    errors.push('Cerebras: CEREBRAS_API_KEY not set in Vercel Environment Variables.');
+  }
+
+  // 3. Provider 3: Groq Direct (500,000 Tokens/Day Free)
   if (groqKey) {
     for (const model of GROQ_MODELS) {
       try {
@@ -143,7 +193,7 @@ module.exports = async function handler(req, res) {
         if (ok) {
           const text = data?.choices?.[0]?.message?.content?.trim();
           if (text) {
-            res.status(200).json({ text, modelUsed: `groq/${model}` });
+            res.status(200).json({ text, modelUsed: `groq/${model}`, activeKeys });
             return;
           }
         }
@@ -152,40 +202,4 @@ module.exports = async function handler(req, res) {
         errors.push(`Groq (${model}): ${err.message}`);
       }
     }
-  } else {
-    errors.push('Groq: GROQ_API_KEY not configured in Vercel Environment Variables.');
-  }
-
-  // Provider 3: OpenRouter Free Models
-  if (openrouterKey) {
-    for (const model of OPENROUTER_MODELS) {
-      try {
-        const { ok, data } = await callOpenAIStyle(
-          'https://openrouter.ai/api/v1/chat/completions',
-          model,
-          openrouterKey,
-          system,
-          prompt,
-          { 'HTTP-Referer': 'https://vercel.com', 'X-Title': 'TalentTrack Smart ATS' }
-        );
-        if (ok) {
-          const text = data?.choices?.[0]?.message?.content?.trim();
-          if (text) {
-            res.status(200).json({ text, modelUsed: `openrouter/${model}` });
-            return;
-          }
-        }
-        errors.push(`OpenRouter (${model}): ${data?.error?.message || 'Failed'}`);
-      } catch (err) {
-        errors.push(`OpenRouter (${model}): ${err.message}`);
-      }
-    }
-  } else {
-    errors.push('OpenRouter: OPENROUTER_API_KEY not configured in Vercel Environment Variables.');
-  }
-
-  res.status(502).json({
-    error: 'All AI providers failed or exceeded quota. Please verify environment variables or try again in a moment.',
-    details: errors
-  });
-};
+  } e
