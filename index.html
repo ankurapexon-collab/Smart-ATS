@@ -329,13 +329,41 @@
   .resume-paper p{margin:0 0 8px 0; color:#000000;}
   .resume-paper strong{color:#000000; font-weight:700;}
 
-  /* PRINT CSS STYLES FOR NATIVE SELECTABLE VECTOR TEXT PDF */
+  /* PRINT CSS STYLES FOR NATIVE SELECTABLE VECTOR TEXT PDF - REMOVES URL, TIME & DATE HEADERS/FOOTERS */
   @media print {
-    body { background: white !important; color: black !important; height: auto !important; overflow: visible !important; }
-    .sidebar, .topbar, .app-footer, .card > div:not(#fmtResultArea), .btn-primary, .btn-ghost, .dropzone, .field, .section-title, .section-sub { display: none !important; }
-    .app, .main, .shell, .card { height: auto !important; overflow: visible !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
-    #fmtResultArea { display: block !important; }
-    .resume-paper { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; font-family: 'Calibri', 'Segoe UI', Arial, sans-serif !important; }
+    @page {
+      margin: 0; /* Suppresses browser headers (Date/Title) and footers (URL) */
+    }
+    body {
+      background: white !important;
+      color: black !important;
+      height: auto !important;
+      overflow: visible !important;
+      margin: 0 !important;
+      padding: 15mm !important; /* Clean paper margins for printed CV */
+    }
+    .sidebar, .topbar, .app-footer, .card > div:not(#fmtResultArea), .btn-primary, .btn-ghost, .dropzone, .field, .section-title, .section-sub, .toast {
+      display: none !important;
+    }
+    .app, .main, .shell, .card {
+      height: auto !important;
+      overflow: visible !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    #fmtResultArea {
+      display: block !important;
+    }
+    .resume-paper {
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+      font-family: 'Calibri', 'Segoe UI', Arial, sans-serif !important;
+    }
   }
 
   /* Copy Button Bar */
