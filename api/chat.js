@@ -1,18 +1,34 @@
 // api/chat.js
-// Vercel Serverless Function - Multi-Provider High-Throughput Engine (Gemini + Groq + OpenRouter)
+// Vercel Serverless API - Resilient Multi-Provider Engine (Gemini + Groq + OpenRouter)
 
 const DEFAULT_SYSTEM = `You are TalentTrack AI, an elite enterprise Talent Acquisition, Sourcing & Immigration Intelligence assistant.
 Always structure your responses cleanly, professionally, and comprehensively.
 Never output raw markdown artifacts like '#---' or '***'. Use clean headers, bold sub-topics, bullet points, and numbered lists.
 Do NOT truncate answers midway — complete every generated output in full detail.`;
 
-const GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
-const GROQ_MODELS = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'mixtral-8x7b-32768'];
+// 100% Active Free Model Candidates
+const GEMINI_MODELS = [
+  'gemini-1.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash-8b',
+  'gemini-1.5-pro'
+];
+
+const GROQ_MODELS = [
+  'llama-3.1-8b-instant',
+  'llama-3.3-70b-versatile',
+  'mixtral-8x7b-32768',
+  'gemma2-9b-it'
+];
+
+// Updated OpenRouter Free Slugs (Removed paid deepseek/deepseek-r1)
 const OPENROUTER_MODELS = [
+  'google/gemini-2.0-flash-lite-preview-02-05:free',
   'google/gemini-2.0-flash-exp:free',
   'meta-llama/llama-3.3-70b-instruct:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
   'qwen/qwen-2.5-72b-instruct:free',
-  'deepseek/deepseek-r1:free'
+  'mistralai/mistral-7b-instruct:free'
 ];
 
 async function callGemini(modelName, apiKey, system, prompt) {
@@ -49,7 +65,7 @@ async function callOpenAIStyle(endpoint, modelName, apiKey, system, prompt, extr
         { role: 'user', content: prompt }
       ],
       temperature: 0.3,
-      max_tokens: 8192
+      max_tokens: 4096
     })
   });
   const data = await res.json();
@@ -83,29 +99,28 @@ export default async function handler(req, res) {
 
   if (!geminiKey && !groqKey && !openrouterKey) {
     res.status(500).json({
-      error: 'No AI API keys configured. Set GEMINI_API_KEY, GROQ_API_KEY, or OPENROUTER_API_KEY in Vercel Environment Variables.'
+      error: 'No API keys configured. Set GEMINI_API_KEY, GROQ_API_KEY, or OPENROUTER_API_KEY in Vercel Environment Variables.'
     });
     return;
   }
 
-  let lastError = null;
+  let errors = [];
 
   // Provider 1: Google Gemini Direct
   if (geminiKey) {
     for (const model of GEMINI_MODELS) {
       try {
-        const { ok, data } = await callGemini(model, geminiKey, system, prompt);
+        const { ok, data, status } = await callGemini(model, geminiKey, system, prompt);
         if (ok) {
           const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
           if (text) {
             res.status(200).json({ text, modelUsed: `gemini/${model}` });
             return;
           }
-        } else {
-          lastError = data?.error?.message || `Gemini ${model} failed`;
         }
+        errors.push(`Gemini (${model}): ${data?.error?.message || 'Status ' + status}`);
       } catch (err) {
-        lastError = err.message;
+        errors.push(`Gemini (${model}): ${err.message}`);
       }
     }
   }
@@ -127,11 +142,10 @@ export default async function handler(req, res) {
             res.status(200).json({ text, modelUsed: `groq/${model}` });
             return;
           }
-        } else {
-          lastError = data?.error?.message || `Groq ${model} failed`;
         }
+        errors.push(`Groq (${model}): ${data?.error?.message || 'Request failed'}`);
       } catch (err) {
-        lastError = err.message;
+        errors.push(`Groq (${model}): ${err.message}`);
       }
     }
   }
@@ -154,16 +168,16 @@ export default async function handler(req, res) {
             res.status(200).json({ text, modelUsed: `openrouter/${model}` });
             return;
           }
-        } else {
-          lastError = data?.error?.message || `OpenRouter ${model} failed`;
         }
+        errors.push(`OpenRouter (${model}): ${data?.error?.message || 'Request failed'}`);
       } catch (err) {
-        lastError = err.message;
+        errors.push(`OpenRouter (${model}): ${err.message}`);
       }
     }
   }
 
   res.status(502).json({
-    error: `All AI providers failed or exceeded quota. Last error: ${lastError}`
+    error: 'All AI providers failed or exceeded quota.',
+    details: errors
   });
 }
