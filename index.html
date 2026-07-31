@@ -638,8 +638,8 @@ function formatResumePaper(text) {
       return;
     }
 
-    // 3. Subheadings (Responsibilities, Key Achievements)
-    const subheadMatch = trimmed.match(/^(\*\*|\#\#\#\s*)?(Responsibilities|Key Achievements)(\*\*|\:)?$/i);
+    // 3. Subheadings (Responsibilities)
+    const subheadMatch = trimmed.match(/^(\*\*|\#\#\#\s*)?(Responsibilities(\*\*|\:)?$/i);
     if (subheadMatch) {
       if (inUl) { out.push('</ul>'); inUl = false; }
       const subTitle = subheadMatch[2];
@@ -1518,6 +1518,8 @@ PROFESSIONAL SUMMARY:
 • [Bullet 1]
 • [Bullet 2]
 • [Bullet 3]
+• [Bullet 4]
+• [Bullet 5]
 
 TECHNICAL SKILLS:
 
@@ -1539,9 +1541,18 @@ Role: [Role Title]
 Responsibilities
 • [Bullet 1]
 • [Bullet 2]
-
-Key Achievements
-• [Bullet 1]
+• [Bullet 3]
+• [Bullet 4]
+• [Bullet 5]
+• [Bullet 6]
+• [Bullet 7]
+• [Bullet 8]
+• [Bullet 9]
+• [Bullet 10]
+• [Bullet 11]
+• [Bullet 12]
+• [Bullet 13]
+• [Bullet 14]
 
 Technologies: [List of tools/technologies used]
 
