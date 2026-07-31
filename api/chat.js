@@ -1,5 +1,5 @@
 // api/chat.js
-// Vercel Serverless API - Multi-Key & 8-Provider Ultra-Resilient Engine (Zero Quota Crash Guarantee)
+// Vercel Serverless API — Multi-Key & 8-Provider Failover Gateway with Zero-Crash Guard
 
 const DEFAULT_SYSTEM = `You are TalentTrack AI, an elite enterprise Talent Acquisition, Sourcing, Legal & Immigration Intelligence assistant.
 Every question is asked in a professional business context, even if phrased ambiguously — for example, "boolean search" or "boolean string" ALWAYS means a candidate-sourcing search query, NEVER a programming language boolean data type, unless the user explicitly asks about writing code.
@@ -12,7 +12,7 @@ CRITICAL — ZERO INFORMATION LOSS RULE: whenever you are asked to reformat, res
 
 JOB DESCRIPTION CONSISTENCY RULE: whenever you generate a Job Description, in any module or context, always use exactly this structure — Job Title / Location / About the Role / Key Responsibilities / Key Skills & Qualifications / Preferred Qualifications — with "-" as the only bullet character. Keep this structure consistent every single time, and always incorporate every specific requirement, mandatory skill, or detail the user provides — never generalize it away or ignore it.`;
 
-// High-capacity free tier models
+// High-capacity free tier models prioritized
 const GROQ_MODELS = ['llama-3.1-8b-instant', 'gemma2-9b-it', 'mixtral-8x7b-32768', 'llama-3.3-70b-versatile'];
 const CEREBRAS_MODELS = ['llama3.1-8b', 'llama3.3-70b'];
 const GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-2.0-flash', 'gemini-1.5-pro'];
@@ -29,7 +29,7 @@ const OPENROUTER_MODELS = [
   'openchat/openchat-7b:free'
 ];
 
-const GLOBAL_DEADLINE_MS = 25000;
+const GLOBAL_DEADLINE_MS = 25000; // Stay safely under Vercel's maxDuration
 const PER_ATTEMPT_TIMEOUT_MS = 6000;
 const DEFAULT_MAX_TOKENS = 2048;
 const MAX_TOKENS_CEILING = 8000;
@@ -40,7 +40,11 @@ function clampMaxTokens(requested) {
   return Math.min(n, MAX_TOKENS_CEILING);
 }
 
-// Split comma-separated keys for instant multi-key rotation
+function isSafetyLabelOnly(text) {
+  return /^(user safety|safety)\s*:\s*(safe|unsafe)\.?$/i.test((text || '').trim());
+}
+
+// Split comma-separated API keys for instant rotation if Key 1 hits rate limits
 function getKeys(envVal) {
   if (!envVal) return [];
   return envVal.split(',').map(k => k.trim()).filter(Boolean);
@@ -117,32 +121,37 @@ module.exports = async function handler(req, res) {
     const cerebrasKeys = getKeys(process.env.CEREBRAS_API_KEY);
     const geminiKeys = getKeys(process.env.GEMINI_API_KEY);
     const mistralKeys = getKeys(process.env.MISTRAL_API_KEY);
-    const cloudflareAccountId = (process.env.CLOUDFLARE_ACCOUNT_ID || '').trim();
-    const cloudflareApiToken = (process.env.CLOUDFLARE_API_TOKEN || '').trim();
-    const sambanovaKeys = getKeys(process.env.SAMBANOVA_API_KEY);
+    const cloudflareAccountId = (process.env.CLOUDFLARE_ACCOUNT_ID || '').trim() || undefined;
+    const cloudflareApiToken = (process.env.CLOUDFLARE_API_TOKEN || '').trim() || undefined;
     const openrouterKeys = getKeys(process.env.OPENROUTER_API_KEY);
+    const sambanovaKeys = getKeys(process.env.SAMBANOVA_API_KEY);
 
     const activeKeys = {
-      GROQ_API_KEY: groqKeys.length,
-      CEREBRAS_API_KEY: cerebrasKeys.length,
-      GEMINI_API_KEY: geminiKeys.length,
-      MISTRAL_API_KEY: mistralKeys.length,
+      GROQ: groqKeys.length > 0,
+      CEREBRAS: cerebrasKeys.length > 0,
+      GEMINI: geminiKeys.length > 0,
+      MISTRAL: mistralKeys.length > 0,
       CLOUDFLARE: !!(cloudflareAccountId && cloudflareApiToken),
-      SAMBANOVA_API_KEY: sambanovaKeys.length,
-      OPENROUTER_API_KEY: openrouterKeys.length,
+      SAMBANOVA: sambanovaKeys.length > 0,
+      OPENROUTER: openrouterKeys.length > 0,
     };
 
     if (req.method === 'GET') {
       const anyKey = Object.values(activeKeys).some(Boolean);
       res.status(200).json({
         status: 'diagnostic',
-        message: anyKey ? 'API keys detected and active.' : 'No API keys detected in Environment Variables.',
+        message: anyKey
+          ? 'API key(s) detected. The system is active.'
+          : 'NO API keys detected. Set GROQ_API_KEY, GEMINI_API_KEY, or CEREBRAS_API_KEY in Vercel Environment Variables and redeploy.',
         activeKeys,
       });
       return;
     }
 
-    if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed. Use POST.' }); return; }
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method not allowed. Use POST.' });
+      return;
+    }
 
     let body = req.body || {};
     if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
@@ -151,24 +160,29 @@ module.exports = async function handler(req, res) {
     if (!prompt) { res.status(400).json({ error: 'Missing "prompt" in request body.' }); return; }
     const maxTokens = clampMaxTokens(requestedMaxTokens);
 
+    if (!Object.values(activeKeys).some(Boolean)) {
+      res.status(400).json({
+        error: 'No API keys detected in Vercel Environment Variables. Set at least GROQ_API_KEY or GEMINI_API_KEY in Vercel, then redeploy.',
+        activeKeys,
+      });
+      return;
+    }
+
     let errors = [];
 
-    // Provider Tiers with Automatic Key Rotation
-    const tiers = [
+    const providers = [
       {
         name: 'groq',
         keys: groqKeys,
-        run: async () => {
-          for (const apiKey of groqKeys) {
-            for (const model of GROQ_MODELS) {
-              if (timeLeft() < 1200) return null;
-              const { ok, data } = await callOpenAIStyle('https://api.groq.com/openai/v1/chat/completions', model, apiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
-              if (ok) {
-                const text = data?.choices?.[0]?.message?.content?.trim();
-                if (text) return { text, modelUsed: `groq/${model}` };
-              }
-              errors.push(`Groq (${model}): ${data?.error?.message || 'Failed'}`);
+        run: async (key) => {
+          for (const model of GROQ_MODELS) {
+            if (timeLeft() < 1500) return null;
+            const { ok, data } = await callOpenAIStyle('https://api.groq.com/openai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            if (ok) {
+              const text = data?.choices?.[0]?.message?.content?.trim();
+              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `groq/${model}` };
             }
+            errors.push(`Groq (${model}): ${data?.error?.message || 'Failed'}`);
           }
           return null;
         }
@@ -176,17 +190,15 @@ module.exports = async function handler(req, res) {
       {
         name: 'cerebras',
         keys: cerebrasKeys,
-        run: async () => {
-          for (const apiKey of cerebrasKeys) {
-            for (const model of CEREBRAS_MODELS) {
-              if (timeLeft() < 1200) return null;
-              const { ok, data } = await callOpenAIStyle('https://api.cerebras.ai/v1/chat/completions', model, apiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
-              if (ok) {
-                const text = data?.choices?.[0]?.message?.content?.trim();
-                if (text) return { text, modelUsed: `cerebras/${model}` };
-              }
-              errors.push(`Cerebras (${model}): ${data?.error?.message || 'Failed'}`);
+        run: async (key) => {
+          for (const model of CEREBRAS_MODELS) {
+            if (timeLeft() < 1500) return null;
+            const { ok, data } = await callOpenAIStyle('https://api.cerebras.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            if (ok) {
+              const text = data?.choices?.[0]?.message?.content?.trim();
+              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `cerebras/${model}` };
             }
+            errors.push(`Cerebras (${model}): ${data?.error?.message || 'Failed'}`);
           }
           return null;
         }
@@ -194,17 +206,15 @@ module.exports = async function handler(req, res) {
       {
         name: 'gemini',
         keys: geminiKeys,
-        run: async () => {
-          for (const apiKey of geminiKeys) {
-            for (const model of GEMINI_MODELS) {
-              if (timeLeft() < 1200) return null;
-              const { ok, data } = await callGemini(model, apiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
-              if (ok) {
-                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-                if (text) return { text, modelUsed: `gemini/${model}` };
-              }
-              errors.push(`Gemini (${model}): ${data?.error?.message || 'Failed'}`);
+        run: async (key) => {
+          for (const model of GEMINI_MODELS) {
+            if (timeLeft() < 1500) return null;
+            const { ok, data } = await callGemini(model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            if (ok) {
+              const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `gemini/${model}` };
             }
+            errors.push(`Gemini (${model}): ${data?.error?.message || 'Failed'}`);
           }
           return null;
         }
@@ -212,32 +222,30 @@ module.exports = async function handler(req, res) {
       {
         name: 'mistral',
         keys: mistralKeys,
-        run: async () => {
-          for (const apiKey of mistralKeys) {
-            for (const model of MISTRAL_MODELS) {
-              if (timeLeft() < 1200) return null;
-              const { ok, data } = await callOpenAIStyle('https://api.mistral.ai/v1/chat/completions', model, apiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
-              if (ok) {
-                const text = data?.choices?.[0]?.message?.content?.trim();
-                if (text) return { text, modelUsed: `mistral/${model}` };
-              }
-              errors.push(`Mistral (${model}): ${data?.error?.message || 'Failed'}`);
+        run: async (key) => {
+          for (const model of MISTRAL_MODELS) {
+            if (timeLeft() < 1500) return null;
+            const { ok, data } = await callOpenAIStyle('https://api.mistral.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            if (ok) {
+              const text = data?.choices?.[0]?.message?.content?.trim();
+              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `mistral/${model}` };
             }
+            errors.push(`Mistral (${model}): ${data?.error?.message || 'Failed'}`);
           }
           return null;
         }
       },
       {
         name: 'cloudflare',
-        keys: (cloudflareAccountId && cloudflareApiToken) ? ['cf'] : [],
-        run: async () => {
+        keys: (cloudflareAccountId && cloudflareApiToken) ? [cloudflareApiToken] : [],
+        run: async (key) => {
           for (const model of CLOUDFLARE_MODELS) {
-            if (timeLeft() < 1200) return null;
+            if (timeLeft() < 1500) return null;
             const endpoint = `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/ai/v1/chat/completions`;
-            const { ok, data } = await callOpenAIStyle(endpoint, model, cloudflareApiToken, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            const { ok, data } = await callOpenAIStyle(endpoint, model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
-              if (text) return { text, modelUsed: `cloudflare/${model}` };
+              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `cloudflare/${model}` };
             }
             errors.push(`Cloudflare (${model}): ${data?.error?.message || 'Failed'}`);
           }
@@ -247,17 +255,15 @@ module.exports = async function handler(req, res) {
       {
         name: 'sambanova',
         keys: sambanovaKeys,
-        run: async () => {
-          for (const apiKey of sambanovaKeys) {
-            for (const model of SAMBANOVA_MODELS) {
-              if (timeLeft() < 1200) return null;
-              const { ok, data } = await callOpenAIStyle('https://api.sambanova.ai/v1/chat/completions', model, apiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
-              if (ok) {
-                const text = data?.choices?.[0]?.message?.content?.trim();
-                if (text) return { text, modelUsed: `sambanova/${model}` };
-              }
-              errors.push(`SambaNova (${model}): ${data?.error?.message || 'Failed'}`);
+        run: async (key) => {
+          for (const model of SAMBANOVA_MODELS) {
+            if (timeLeft() < 1500) return null;
+            const { ok, data } = await callOpenAIStyle('https://api.sambanova.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            if (ok) {
+              const text = data?.choices?.[0]?.message?.content?.trim();
+              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `sambanova/${model}` };
             }
+            errors.push(`SambaNova (${model}): ${data?.error?.message || 'Failed'}`);
           }
           return null;
         }
@@ -265,37 +271,42 @@ module.exports = async function handler(req, res) {
       {
         name: 'openrouter',
         keys: openrouterKeys,
-        run: async () => {
-          for (const apiKey of openrouterKeys) {
-            for (const model of OPENROUTER_MODELS) {
-              if (timeLeft() < 1200) return null;
-              const { ok, data } = await callOpenAIStyle('https://openrouter.ai/api/v1/chat/completions', model, apiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens, { 'HTTP-Referer': 'https://vercel.com', 'X-Title': 'TalentTrack Smart ATS' });
-              if (ok) {
-                const text = data?.choices?.[0]?.message?.content?.trim();
-                if (text) return { text, modelUsed: `openrouter/${model}` };
-              }
-              errors.push(`OpenRouter (${model}): ${data?.error?.message || 'Failed'}`);
+        run: async (key) => {
+          for (const model of OPENROUTER_MODELS) {
+            if (timeLeft() < 1500) return null;
+            const { ok, data } = await callOpenAIStyle('https://openrouter.ai/api/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens, { 'HTTP-Referer': 'https://vercel.com', 'X-Title': 'TalentTrack Smart ATS' });
+            if (ok) {
+              const text = data?.choices?.[0]?.message?.content?.trim();
+              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `openrouter/${model}` };
             }
+            errors.push(`OpenRouter (${model}): ${data?.error?.message || 'Failed'}`);
           }
           return null;
         }
       }
     ];
 
-    for (const tier of tiers) {
-      if (tier.keys.length === 0) { errors.push(`${tier.name}: no API key configured.`); continue; }
-      if (timeLeft() < 1200) { errors.push(`${tier.name}: skipped — out of time budget.`); continue; }
-      const result = await tier.run();
-      if (result) {
-        res.status(200).json({ ...result, activeKeys, elapsedMs: Date.now() - startTime });
-        return;
+    // Iterate across providers and their associated API keys
+    for (const provider of providers) {
+      if (provider.keys.length === 0) {
+        errors.push(`${provider.name}: No API key configured.`);
+        continue;
+      }
+      for (const key of provider.keys) {
+        if (timeLeft() < 1500) { errors.push(`${provider.name}: skipped due to execution time limit.`); break; }
+        const result = await provider.run(key);
+        if (result) {
+          res.status(200).json({ ...result, activeKeys, elapsedMs: Date.now() - startTime });
+          return;
+        }
       }
     }
 
     res.status(502).json({
-      error: 'All AI providers failed or timed out. Please check activeKeys or try again in a moment.',
+      error: 'All configured AI providers failed, timed out, or reached rate limits.',
       activeKeys,
-      details: errors
+      elapsedMs: Date.now() - startTime,
+      details: errors,
     });
 
   } catch (globalErr) {
