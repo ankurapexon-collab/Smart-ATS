@@ -629,17 +629,17 @@ function formatResumePaper(text) {
       return;
     }
 
-    // 2. Main Section Headings (PROFESSIONAL SUMMARY:, TECHNICAL SKILLS:, EMPLOYMENT HISTORY, EDUCATION AND CERTIFICATIONS)
-    const mainHeadMatch = trimmed.match(/^(\*\*|\#\#\s*)?(PROFESSIONAL SUMMARY:|TECHNICAL SKILLS:|EMPLOYMENT HISTORY|EDUCATION AND CERTIFICATIONS)(\*\*|\:)?$/i);
-    if (mainHeadMatch) {
+    // 2. Main Section Headings
+    const mainHeadMatch = trimmed.match(/^(\*\*|\#\#\s*)?([A-Z\s\/&:\,]+)(\*\*|\:)?$/);
+    if (mainHeadMatch && trimmed.length < 50 && !trimmed.includes(': ') && !trimmed.startsWith('•') && !trimmed.startsWith('-')) {
       if (inUl) { out.push('</ul>'); inUl = false; }
-      const title = mainHeadMatch[2].toUpperCase();
+      const title = trimmed.replace(/[\*\#]/g, '').trim().toUpperCase();
       out.push(`<div style="font-size:14px; font-weight:700; text-transform:uppercase; margin:22px 0 8px 0; color:#000;">${title}</div>`);
       return;
     }
 
     // 3. Subheadings (Responsibilities, Key Achievements)
-    const subheadMatch = trimmed.match(/^(\*\*|\#\#\#\s*)?(Responsibilities|Key Achievements)(\*\*|\:)?$/i);
+    const subheadMatch = trimmed.match(/^(\*\*|\#\#\#\s*)?(Responsibilities|Key Achievements|Key Responsibilities|Projects)(\*\*|\:)?$/i);
     if (subheadMatch) {
       if (inUl) { out.push('</ul>'); inUl = false; }
       const subTitle = subheadMatch[2];
@@ -717,7 +717,7 @@ const STAGES = [
   { key:'offer',     label:'Offer',     color:'#10B981', bg:'#D1FAE5' },
   { key:'hired',     label:'Hired',     color:'#06B6D4', bg:'#CFFAFE' },
 ];
-const CAND_KEY='talenttrack_candidates_v11', JOBS_KEY='talenttrack_jobs_v11', THEME_KEY='talenttrack_theme_v6', SESSIONS_KEY='talenttrack_chatsessions_v6', ACT_KEY='talenttrack_activities_v6';
+const CAND_KEY='talenttrack_candidates_v12', JOBS_KEY='talenttrack_jobs_v12', THEME_KEY='talenttrack_theme_v7', SESSIONS_KEY='talenttrack_chatsessions_v7', ACT_KEY='talenttrack_activities_v7';
 
 function cid(){ return 'C-' + Math.random().toString(36).slice(2,8).toUpperCase(); }
 function jid(){ return 'J-' + Math.random().toString(36).slice(2,7).toUpperCase(); }
@@ -737,19 +737,19 @@ About the Role
 We are seeking a talented and motivated Data Engineer with hands-on experience in Databricks & Azure cloud technologies to join our team in Newcastle/Sunderland.
 
 Key Responsibilities
-• Design, develop, and maintain ETL pipelines using Azure services, with a focus on Databricks & Azure Datafactory
-• Develop and optimize ETL processes leveraging Notebooks to ensure efficient data movement and transformation.
-• Collaborate with data analysts and business intelligence teams to develop and maintain Power BI semantic models and reports.
+- Design, develop, and maintain ETL pipelines using Azure services, with a focus on Databricks & Azure Datafactory
+- Develop and optimize ETL processes leveraging Notebooks to ensure efficient data movement and transformation.
+- Collaborate with data analysts and business intelligence teams to develop and maintain Power BI semantic models and reports.
 
 Key Skills & Qualifications
-• Proven experience as a Data Engineer or in a similar role, with expertise in Azure cloud services.
-• Experience with Azure services like Azure Data Lake and Azure Databricks.
-• Proficiency in designing and managing ETL processes using Notebooks.`;
+- Proven experience as a Data Engineer or in a similar role, with expertise in Azure cloud services.
+- Experience with Azure services like Azure Data Lake and Azure Databricks.
+- Proficiency in designing and managing ETL processes using Notebooks.`;
 
 function seedJobs(){
   return [
     {id:jid(), title:'Data Engineer with Azure Experience', department:'Data & Analytics', location:'Sunderland, UK', status:'open', jdText: DEMO_JD},
-    {id:jid(), title:'Senior Java Backend Engineer', department:'Engineering', location:'London, UK', status:'open', jdText:'Job Title: Senior Java Backend Engineer\nLocation: London, UK\n\nKey Responsibilities\n• Java 17 Microservices\n• Spring Boot & GCP'},
+    {id:jid(), title:'Senior Java Backend Engineer', department:'Engineering', location:'London, UK', status:'open', jdText:'Job Title: Senior Java Backend Engineer\nLocation: London, UK\n\nKey Responsibilities\n- Java 17 Microservices\n- Spring Boot & GCP'},
   ];
 }
 
@@ -862,13 +862,11 @@ async function aiParseResume(resumeText){
   };
   try{
     const raw = await callClaude(
-      'You extract structured data from resumes. Respond with ONLY a single valid JSON object and absolutely nothing else — no explanation, no markdown fences, no preamble, no closing remarks. Exact format: {"fullName":"","email":"","phone":"","skills":[],"roleGuess":""}. If a field cannot be found, use an empty string or empty array for it — never omit a key.',
+      'Extract structured JSON from resume text. Output ONLY valid JSON: {"fullName":"","email":"","phone":"","skills":[],"roleGuess":""}',
       resumeText.slice(0, 6000)
     );
     return attemptParse(raw);
   }catch(e){
-    // One repair attempt with an even stricter instruction, in case the model
-    // added conversational text around the JSON the first time.
     try{
       const raw2 = await callClaude(
         'Output ONLY raw JSON. Nothing before it, nothing after it. No markdown fences. No commentary. Your entire response must start with { and end with }.',
@@ -1534,25 +1532,26 @@ function renderFormatterView(){
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Formatting to Exact Calibri Layout...';
 
-    const systemPrompt = `You are a Strict Executive Resume Formatter. Convert the provided candidate resume into the EXACT standard corporate layout matching this template. The bullet placeholders shown below (e.g. "[Bullet 1]") are illustrative ONLY — they do NOT indicate how many bullets to write. You must include EVERY bullet, responsibility, achievement, and detail present in the original resume, however many there are. If the original has 15 bullets under a section, your output must also have 15 bullets there — never fewer:
+    // SYSTEM PROMPT INCORPORATING THE 12 MASTER RULES FOR CV FORMATTING
+    const systemPrompt = `You are a Strict Executive Resume Formatter. Convert the provided candidate resume into the EXACT standard corporate layout matching this template:
 
 # [CANDIDATE NAME]
 
 PROFESSIONAL SUMMARY:
 
-• [One bullet per point in the original summary — include ALL of them, do not condense multiple points into one, do not drop any]
+- [Bullet point]
 
 TECHNICAL SKILLS:
 
-• Languages: [List]
-• Backend & Frameworks: [List]
-• Microservices & APIs: [List]
-• Databases & Data: [List]
-• Cloud: [List]
-• DevOps & CI/CD: [List]
-• Monitoring: [List]
-• Testing: [List]
-• AI-Assisted Dev: [List]
+- Languages: [List]
+- Backend & Frameworks: [List]
+- Microservices & APIs: [List]
+- Databases & Data: [List]
+- Cloud: [List]
+- DevOps & CI/CD: [List]
+- Monitoring: [List]
+- Testing: [List]
+- AI-Assisted Dev: [List]
 
 EMPLOYMENT HISTORY
 
@@ -1560,28 +1559,37 @@ Organisation: [Company Name], [Country] | [Dates e.g., Feb 2022 – Present]
 Role: [Role Title]
 
 Responsibilities
-• [One bullet per responsibility listed in the original for this role — include ALL of them, however many there are]
+- [Bullet point]
 
 Key Achievements
-• [One bullet per achievement listed in the original — include ALL of them]
+- [Bullet point]
 
 Technologies: [List of tools/technologies used]
 
-[Repeat for next Organisation, preserving every role and every bullet from the original]
+[Repeat for next Organisation]
 
 EDUCATION AND CERTIFICATIONS
 
-• [Degree Name] – [College/University Name] | [Year]
+- [Degree Name] – [College/University Name] | [Year]
 
-CRITICAL CONSTRAINTS:
-1. DO NOT INCLUDE ANY CONTACT INFORMATION (No phone numbers, no emails, no home addresses, no LinkedIn URLs).
-2. Candidate Name MUST be at the top, preceded by '# '.
-3. NEVER output literal HTML tags like <center>, <b>, <span>, or <br>. Use ONLY standard Markdown text and pipes '|' for date separation.
-4. Output raw Markdown text directly matching this schema.
-5. ABSOLUTE RULE — ZERO INFORMATION LOSS: You are reformatting, not summarizing. Every bullet point, responsibility, achievement, skill, and sentence in the original resume MUST appear in your output. Do not shorten, condense, merge, paraphrase away, or omit ANY content, no matter how long the original section is. Only the layout and formatting should change — the substance and count of information must be 100% preserved. If the professional summary has 15 lines, output 15 bullets. If a role lists 12 responsibilities, output 12 responsibilities. This is the single most important rule — violating it is a critical failure.`;
+MASTER RULES FOR CV FORMATTING (STRICT COMPLIANCE):
+1. PRESERVE ORIGINAL STRUCTURE: Do not add, remove, rename, or reorder sections unless the original document is clearly inconsistent or duplicated.
+2. OPTIONAL SECTIONS RULE:
+   - Include "Achievements" ONLY if present in original CV. Do not create if missing.
+   - Include "Technical Skills" ONLY if present in original CV. If non-technical with no technical skills section, do not add one.
+   - Apply same rule to all optional sections (Summary, Projects, Certifications, Awards, Languages, References, Volunteer, etc.). Include ONLY sections that exist in the original.
+3. ZERO CONTENT GENERATION: Never generate, assume, or invent content, skills, experience, achievements, certifications, projects, responsibilities, dates, employers, qualifications, or keywords not present in original CV.
+4. CORRECTIONS & ATS LAYOUT: Correct grammar, spelling, punctuation, alignment, spacing, bullet formatting ("-"), font consistency while keeping original meaning unchanged.
+5. CONSOLIDATION: If info is duplicated, consolidate without changing meaning or removing details.
+6. MISPLACED INFO: If info appears under wrong heading, intelligently move it to most appropriate existing section without creating new sections.
+7. DATES & NAMES: Keep all dates, company names, job titles, education, certifications, and history EXACTLY as provided.
+8. NO EXAGGERATION: Do not exaggerate, rewrite, optimize for specific job, or add industry keywords. Formatting only, not enhancement.
+9. NO CONTACT INFO: Do not include phone numbers, emails, addresses, or LinkedIn URLs in the header.
+10. VERIFY BEFORE OUTPUT: Ensure every section in output existed in original CV and no new sections have been introduced.
+11. BULLET CHARACTER: Use "-" as the ONLY bullet character throughout. Never output "*", "+", "•", or literal HTML tags (<center>, <b>, <span>). Use Markdown '|' for date separation.`;
 
     try {
-      const formattedOutput = await callClaude(systemPrompt, `RESUME TO REFORMAT — preserve every single detail, do not omit or summarize anything:\n${rawText}`, 6000);
+      const formattedOutput = await callClaude(systemPrompt, `RESUME TO REFORMAT (Follow the 12 Master Formatting Rules strictly):\n${rawText}`, 6000);
       
       const paper = document.getElementById('formattedResumePaper');
       paper.innerHTML = formatResumePaper(formattedOutput);
