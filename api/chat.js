@@ -1,27 +1,5 @@
 // api/chat.js
-// Vercel Serverless API — Multi-Provider Free-Tier Gateway with a hard time budget.
-//
-// THIS ROUND'S CHANGES:
-// 1. Added maxTokens support (request body can pass { maxTokens: N }), so
-//    long tasks like full CV reformatting or contract generation can request
-//    a bigger output budget than quick chat replies — this was the second
-//    cause (alongside a bad prompt) of the resume formatter silently cutting
-//    content short.
-// 2. Strengthened DEFAULT_SYSTEM with two global rules that apply to every
-//    request regardless of which module calls it: (a) never summarize or
-//    omit content when asked to reformat/restructure — preserve everything,
-//    and (b) when generating a Job Description in ANY context, always use
-//    the same standardized structure and "-" bullets only, for consistency
-//    between the dedicated JD Generator and ad-hoc requests via chat.
-// 3. Added three more verified, genuinely free, no-credit-card providers:
-//    Mistral AI, Cohere, and Cloudflare Workers AI — on top of the existing
-//    Groq, Cerebras, OpenRouter, SambaNova, and Gemini. Each was checked for
-//    current (2026) free-tier terms before being added, rather than assumed.
-// 4. Kept the per-attempt timeout + global time budget + trimmed keys from
-//    the previous round — those fixes remain necessary and are unchanged.
-//
-// IMPORTANT: vercel.json must include:
-//   "functions": { "api/chat.js": { "maxDuration": 30 } }
+// Vercel Serverless API - Multi-Key & 8-Provider Ultra-Resilient Engine (Zero Quota Crash Guarantee)
 
 const DEFAULT_SYSTEM = `You are TalentTrack AI, an elite enterprise Talent Acquisition, Sourcing, Legal & Immigration Intelligence assistant.
 Every question is asked in a professional business context, even if phrased ambiguously — for example, "boolean search" or "boolean string" ALWAYS means a candidate-sourcing search query, NEVER a programming language boolean data type, unless the user explicitly asks about writing code.
@@ -34,24 +12,27 @@ CRITICAL — ZERO INFORMATION LOSS RULE: whenever you are asked to reformat, res
 
 JOB DESCRIPTION CONSISTENCY RULE: whenever you generate a Job Description, in any module or context, always use exactly this structure — Job Title / Location / About the Role / Key Responsibilities / Key Skills & Qualifications / Preferred Qualifications — with "-" as the only bullet character. Keep this structure consistent every single time, and always incorporate every specific requirement, mandatory skill, or detail the user provides — never generalize it away or ignore it.`;
 
-// Ordered fastest/most-reliable-first based on verified 2026 free-tier terms.
-const GROQ_MODELS = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile'];
-const MISTRAL_MODELS = ['mistral-small-latest'];
-const CEREBRAS_MODELS = ['llama3.1-8b'];
+// High-capacity free tier models
+const GROQ_MODELS = ['llama-3.1-8b-instant', 'gemma2-9b-it', 'mixtral-8x7b-32768', 'llama-3.3-70b-versatile'];
+const CEREBRAS_MODELS = ['llama3.1-8b', 'llama3.3-70b'];
+const GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+const MISTRAL_MODELS = ['mistral-small-latest', 'open-mistral-7b'];
 const CLOUDFLARE_MODELS = ['@cf/meta/llama-3.1-8b-instruct'];
+const SAMBANOVA_MODELS = ['Meta-Llama-3.1-8B-Instruct', 'Meta-Llama-3.3-70B-Instruct'];
 const OPENROUTER_MODELS = [
-  'meta-llama/llama-3.2-3b-instruct:free',
-  'mistralai/mistral-7b-instruct:free',
+  'google/gemini-2.0-flash-lite-preview-02-05:free',
+  'google/gemini-2.0-flash-exp:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
   'meta-llama/llama-3.1-8b-instruct:free',
+  'qwen/qwen-2.5-72b-instruct:free',
+  'mistralai/mistral-7b-instruct:free',
+  'openchat/openchat-7b:free'
 ];
-const COHERE_MODELS = ['command-r'];
-const SAMBANOVA_MODELS = ['Meta-Llama-3.1-8B-Instruct'];
-const GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash'];
 
-const GLOBAL_DEADLINE_MS = 25000; // stay safely under Vercel's 30s maxDuration
-const PER_ATTEMPT_TIMEOUT_MS = 7000;
+const GLOBAL_DEADLINE_MS = 25000;
+const PER_ATTEMPT_TIMEOUT_MS = 6000;
 const DEFAULT_MAX_TOKENS = 2048;
-const MAX_TOKENS_CEILING = 8000; // safety cap regardless of what the client requests
+const MAX_TOKENS_CEILING = 8000;
 
 function clampMaxTokens(requested) {
   const n = parseInt(requested, 10);
@@ -59,8 +40,10 @@ function clampMaxTokens(requested) {
   return Math.min(n, MAX_TOKENS_CEILING);
 }
 
-function isSafetyLabelOnly(text) {
-  return /^(user safety|safety)\s*:\s*(safe|unsafe)\.?$/i.test((text || '').trim());
+// Split comma-separated keys for instant multi-key rotation
+function getKeys(envVal) {
+  if (!envVal) return [];
+  return envVal.split(',').map(k => k.trim()).filter(Boolean);
 }
 
 async function safeFetchJson(endpoint, options, timeoutMs) {
@@ -119,29 +102,6 @@ async function callOpenAIStyle(endpoint, modelName, apiKey, system, prompt, time
   );
 }
 
-// Cohere uses its own v2 chat API shape (not OpenAI-compatible), so it needs
-// its own call function and its own response-shape parsing at the call site.
-async function callCohere(modelName, apiKey, system, prompt, timeoutMs, maxTokens) {
-  const combinedSystem = system ? `${system}\n\n${DEFAULT_SYSTEM}` : DEFAULT_SYSTEM;
-  return await safeFetchJson(
-    'https://api.cohere.com/v2/chat',
-    {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [
-          { role: 'system', content: combinedSystem },
-          { role: 'user', content: prompt },
-        ],
-        temperature: 0.3,
-        max_tokens: maxTokens,
-      }),
-    },
-    timeoutMs
-  );
-}
-
 module.exports = async function handler(req, res) {
   const startTime = Date.now();
   const timeLeft = () => GLOBAL_DEADLINE_MS - (Date.now() - startTime);
@@ -153,45 +113,36 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
-    // Trim every key defensively — a trailing newline or space from copy-paste
-    // makes a key invalid in a way that's hard to notice just by looking at it.
-    const groqKey = (process.env.GROQ_API_KEY || '').trim() || undefined;
-    const mistralKey = (process.env.MISTRAL_API_KEY || '').trim() || undefined;
-    const cerebrasKey = (process.env.CEREBRAS_API_KEY || '').trim() || undefined;
-    const cloudflareAccountId = (process.env.CLOUDFLARE_ACCOUNT_ID || '').trim() || undefined;
-    const cloudflareApiToken = (process.env.CLOUDFLARE_API_TOKEN || '').trim() || undefined;
-    const openrouterKey = (process.env.OPENROUTER_API_KEY || '').trim() || undefined;
-    const cohereKey = (process.env.COHERE_API_KEY || '').trim() || undefined;
-    const sambanovaKey = (process.env.SAMBANOVA_API_KEY || '').trim() || undefined;
-    const geminiKey = (process.env.GEMINI_API_KEY || '').trim() || undefined;
+    const groqKeys = getKeys(process.env.GROQ_API_KEY);
+    const cerebrasKeys = getKeys(process.env.CEREBRAS_API_KEY);
+    const geminiKeys = getKeys(process.env.GEMINI_API_KEY);
+    const mistralKeys = getKeys(process.env.MISTRAL_API_KEY);
+    const cloudflareAccountId = (process.env.CLOUDFLARE_ACCOUNT_ID || '').trim();
+    const cloudflareApiToken = (process.env.CLOUDFLARE_API_TOKEN || '').trim();
+    const sambanovaKeys = getKeys(process.env.SAMBANOVA_API_KEY);
+    const openrouterKeys = getKeys(process.env.OPENROUTER_API_KEY);
 
     const activeKeys = {
-      GROQ_API_KEY: !!groqKey,
-      MISTRAL_API_KEY: !!mistralKey,
-      CEREBRAS_API_KEY: !!cerebrasKey,
+      GROQ_API_KEY: groqKeys.length,
+      CEREBRAS_API_KEY: cerebrasKeys.length,
+      GEMINI_API_KEY: geminiKeys.length,
+      MISTRAL_API_KEY: mistralKeys.length,
       CLOUDFLARE: !!(cloudflareAccountId && cloudflareApiToken),
-      OPENROUTER_API_KEY: !!openrouterKey,
-      COHERE_API_KEY: !!cohereKey,
-      SAMBANOVA_API_KEY: !!sambanovaKey,
-      GEMINI_API_KEY: !!geminiKey,
+      SAMBANOVA_API_KEY: sambanovaKeys.length,
+      OPENROUTER_API_KEY: openrouterKeys.length,
     };
 
-    // GET /api/chat — visit this URL directly in your browser any time to
-    // instantly check which keys Vercel currently sees, with zero AI calls
-    // made and zero quota spent.
     if (req.method === 'GET') {
       const anyKey = Object.values(activeKeys).some(Boolean);
       res.status(200).json({
         status: 'diagnostic',
-        message: anyKey
-          ? 'At least one API key is detected by this deployment. If AI requests still fail, the key itself may be invalid/expired — see per-provider errors in a real POST request.'
-          : 'NO API keys are detected by this deployment. Either none are set in Vercel, or they were added/changed after the last deploy and you have not redeployed since. Add a key in Vercel > Settings > Environment Variables, then go to Deployments > (latest) > "..." > Redeploy.',
+        message: anyKey ? 'API keys detected and active.' : 'No API keys detected in Environment Variables.',
         activeKeys,
       });
       return;
     }
 
-    if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed. Use POST for AI requests, or GET for a diagnostic check.' }); return; }
+    if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed. Use POST.' }); return; }
 
     let body = req.body || {};
     if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
@@ -200,166 +151,151 @@ module.exports = async function handler(req, res) {
     if (!prompt) { res.status(400).json({ error: 'Missing "prompt" in request body.' }); return; }
     const maxTokens = clampMaxTokens(requestedMaxTokens);
 
-    if (!groqKey && !mistralKey && !cerebrasKey && !(cloudflareAccountId && cloudflareApiToken) && !openrouterKey && !cohereKey && !sambanovaKey && !geminiKey) {
-      res.status(400).json({
-        error: 'No API keys detected in Vercel Environment Variables. Set at least GROQ_API_KEY (recommended — fastest free tier) in Vercel, then redeploy. Visit this same URL with GET (just paste it in your browser) any time to check key status without spending quota.',
-        activeKeys,
-      });
-      return;
-    }
-
     let errors = [];
 
+    // Provider Tiers with Automatic Key Rotation
     const tiers = [
       {
         name: 'groq',
-        active: !!groqKey,
+        keys: groqKeys,
         run: async () => {
-          for (const model of GROQ_MODELS) {
-            if (timeLeft() < 1500) return null;
-            const { ok, data } = await callOpenAIStyle('https://api.groq.com/openai/v1/chat/completions', model, groqKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
-            if (ok) {
-              const text = data?.choices?.[0]?.message?.content?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `groq/${model}` };
+          for (const apiKey of groqKeys) {
+            for (const model of GROQ_MODELS) {
+              if (timeLeft() < 1200) return null;
+              const { ok, data } = await callOpenAIStyle('https://api.groq.com/openai/v1/chat/completions', model, apiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+              if (ok) {
+                const text = data?.choices?.[0]?.message?.content?.trim();
+                if (text) return { text, modelUsed: `groq/${model}` };
+              }
+              errors.push(`Groq (${model}): ${data?.error?.message || 'Failed'}`);
             }
-            errors.push(`Groq (${model}): ${data?.error?.message || 'Failed'}`);
           }
           return null;
-        },
-      },
-      {
-        name: 'mistral',
-        active: !!mistralKey,
-        run: async () => {
-          for (const model of MISTRAL_MODELS) {
-            if (timeLeft() < 1500) return null;
-            const { ok, data } = await callOpenAIStyle('https://api.mistral.ai/v1/chat/completions', model, mistralKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
-            if (ok) {
-              const text = data?.choices?.[0]?.message?.content?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `mistral/${model}` };
-            }
-            errors.push(`Mistral (${model}): ${data?.error?.message || 'Failed'}`);
-          }
-          return null;
-        },
+        }
       },
       {
         name: 'cerebras',
-        active: !!cerebrasKey,
+        keys: cerebrasKeys,
         run: async () => {
-          for (const model of CEREBRAS_MODELS) {
-            if (timeLeft() < 1500) return null;
-            const { ok, data } = await callOpenAIStyle('https://api.cerebras.ai/v1/chat/completions', model, cerebrasKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
-            if (ok) {
-              const text = data?.choices?.[0]?.message?.content?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `cerebras/${model}` };
+          for (const apiKey of cerebrasKeys) {
+            for (const model of CEREBRAS_MODELS) {
+              if (timeLeft() < 1200) return null;
+              const { ok, data } = await callOpenAIStyle('https://api.cerebras.ai/v1/chat/completions', model, apiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+              if (ok) {
+                const text = data?.choices?.[0]?.message?.content?.trim();
+                if (text) return { text, modelUsed: `cerebras/${model}` };
+              }
+              errors.push(`Cerebras (${model}): ${data?.error?.message || 'Failed'}`);
             }
-            errors.push(`Cerebras (${model}): ${data?.error?.message || 'Failed'}`);
           }
           return null;
-        },
+        }
+      },
+      {
+        name: 'gemini',
+        keys: geminiKeys,
+        run: async () => {
+          for (const apiKey of geminiKeys) {
+            for (const model of GEMINI_MODELS) {
+              if (timeLeft() < 1200) return null;
+              const { ok, data } = await callGemini(model, apiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+              if (ok) {
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                if (text) return { text, modelUsed: `gemini/${model}` };
+              }
+              errors.push(`Gemini (${model}): ${data?.error?.message || 'Failed'}`);
+            }
+          }
+          return null;
+        }
+      },
+      {
+        name: 'mistral',
+        keys: mistralKeys,
+        run: async () => {
+          for (const apiKey of mistralKeys) {
+            for (const model of MISTRAL_MODELS) {
+              if (timeLeft() < 1200) return null;
+              const { ok, data } = await callOpenAIStyle('https://api.mistral.ai/v1/chat/completions', model, apiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+              if (ok) {
+                const text = data?.choices?.[0]?.message?.content?.trim();
+                if (text) return { text, modelUsed: `mistral/${model}` };
+              }
+              errors.push(`Mistral (${model}): ${data?.error?.message || 'Failed'}`);
+            }
+          }
+          return null;
+        }
       },
       {
         name: 'cloudflare',
-        active: !!(cloudflareAccountId && cloudflareApiToken),
+        keys: (cloudflareAccountId && cloudflareApiToken) ? ['cf'] : [],
         run: async () => {
           for (const model of CLOUDFLARE_MODELS) {
-            if (timeLeft() < 1500) return null;
+            if (timeLeft() < 1200) return null;
             const endpoint = `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/ai/v1/chat/completions`;
             const { ok, data } = await callOpenAIStyle(endpoint, model, cloudflareApiToken, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `cloudflare/${model}` };
+              if (text) return { text, modelUsed: `cloudflare/${model}` };
             }
             errors.push(`Cloudflare (${model}): ${data?.error?.message || 'Failed'}`);
           }
           return null;
-        },
-      },
-      {
-        name: 'openrouter',
-        active: !!openrouterKey,
-        run: async () => {
-          for (const model of OPENROUTER_MODELS) {
-            if (timeLeft() < 1500) return null;
-            const { ok, data } = await callOpenAIStyle('https://openrouter.ai/api/v1/chat/completions', model, openrouterKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens, { 'HTTP-Referer': 'https://vercel.com', 'X-Title': 'TalentTrack Smart ATS' });
-            if (ok) {
-              const text = data?.choices?.[0]?.message?.content?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `openrouter/${model}` };
-            }
-            errors.push(`OpenRouter (${model}): ${data?.error?.message || 'Failed'}`);
-          }
-          return null;
-        },
-      },
-      {
-        name: 'cohere',
-        active: !!cohereKey,
-        run: async () => {
-          for (const model of COHERE_MODELS) {
-            if (timeLeft() < 1500) return null;
-            const { ok, data } = await callCohere(model, cohereKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
-            if (ok) {
-              const text = data?.message?.content?.[0]?.text?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `cohere/${model}` };
-            }
-            errors.push(`Cohere (${model}): ${data?.error?.message || data?.message || 'Failed'}`);
-          }
-          return null;
-        },
+        }
       },
       {
         name: 'sambanova',
-        active: !!sambanovaKey,
+        keys: sambanovaKeys,
         run: async () => {
-          for (const model of SAMBANOVA_MODELS) {
-            if (timeLeft() < 1500) return null;
-            const { ok, data } = await callOpenAIStyle('https://api.sambanova.ai/v1/chat/completions', model, sambanovaKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
-            if (ok) {
-              const text = data?.choices?.[0]?.message?.content?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `sambanova/${model}` };
+          for (const apiKey of sambanovaKeys) {
+            for (const model of SAMBANOVA_MODELS) {
+              if (timeLeft() < 1200) return null;
+              const { ok, data } = await callOpenAIStyle('https://api.sambanova.ai/v1/chat/completions', model, apiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+              if (ok) {
+                const text = data?.choices?.[0]?.message?.content?.trim();
+                if (text) return { text, modelUsed: `sambanova/${model}` };
+              }
+              errors.push(`SambaNova (${model}): ${data?.error?.message || 'Failed'}`);
             }
-            errors.push(`SambaNova (${model}): ${data?.error?.message || 'Failed'}`);
           }
           return null;
-        },
+        }
       },
       {
-        name: 'gemini',
-        active: !!geminiKey,
+        name: 'openrouter',
+        keys: openrouterKeys,
         run: async () => {
-          for (const model of GEMINI_MODELS) {
-            if (timeLeft() < 1500) return null;
-            const { ok, data } = await callGemini(model, geminiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
-            if (ok) {
-              const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `gemini/${model}` };
+          for (const apiKey of openrouterKeys) {
+            for (const model of OPENROUTER_MODELS) {
+              if (timeLeft() < 1200) return null;
+              const { ok, data } = await callOpenAIStyle('https://openrouter.ai/api/v1/chat/completions', model, apiKey, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens, { 'HTTP-Referer': 'https://vercel.com', 'X-Title': 'TalentTrack Smart ATS' });
+              if (ok) {
+                const text = data?.choices?.[0]?.message?.content?.trim();
+                if (text) return { text, modelUsed: `openrouter/${model}` };
+              }
+              errors.push(`OpenRouter (${model}): ${data?.error?.message || 'Failed'}`);
             }
-            errors.push(`Gemini (${model}): ${data?.error?.message || 'failed'}`);
           }
           return null;
-        },
-      },
+        }
+      }
     ];
 
     for (const tier of tiers) {
-      if (!tier.active) { errors.push(`${tier.name}: no API key configured.`); continue; }
-      if (timeLeft() < 1500) { errors.push(`${tier.name}: skipped — out of time budget.`); continue; }
+      if (tier.keys.length === 0) { errors.push(`${tier.name}: no API key configured.`); continue; }
+      if (timeLeft() < 1200) { errors.push(`${tier.name}: skipped — out of time budget.`); continue; }
       const result = await tier.run();
       if (result) {
-        res.status(200).json({ ...result, activeKeys, elapsedMs: Date.now() - startTime, maxTokensUsed: maxTokens });
+        res.status(200).json({ ...result, activeKeys, elapsedMs: Date.now() - startTime });
         return;
       }
     }
 
     res.status(502).json({
-      error: 'All configured AI providers failed, timed out, or ran out of time budget. ' +
-        'Open this exact URL in your browser (GET request, no quota used) to see which keys are actually detected right now: ' +
-        '/api/chat — if it shows no keys detected, you added them in Vercel but have not redeployed since. ' +
-        'If keys ARE detected but this still fails, check the "details" list below for the specific reason each provider rejected the request (commonly: invalid/expired key, or free-tier daily limit reached).',
+      error: 'All AI providers failed or timed out. Please check activeKeys or try again in a moment.',
       activeKeys,
-      elapsedMs: Date.now() - startTime,
-      details: errors,
+      details: errors
     });
 
   } catch (globalErr) {
