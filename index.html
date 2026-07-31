@@ -98,7 +98,7 @@
   .toggle-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border-light);background:var(--panel-light);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-dark);transition:all .2s;}
   body.dark .toggle-btn{background:var(--panel-dark-2); border-color:var(--border-dark); color:var(--text-light);}
 
-  .shell{max-width:1280px; margin:0 auto; padding:26px 28px 30px 28px; width:100%; flex:1; min-width:0; overflow-x:hidden;}
+  .shell{max-width:1280px; margin:0 auto; padding:26px 28px 30px 28px; width:100%; flex:1;}
 
   /* Welcome Banner */
   .welcome-card{
@@ -160,7 +160,6 @@
   .formatted-output{
     background:var(--paper); border:1px solid var(--border-light); border-radius:12px;
     padding:22px; margin-top:16px; font-size:14px; line-height:1.7; color:var(--text-dark);
-    overflow-wrap:anywhere; word-break:break-word; min-width:0;
   }
   body.dark .formatted-output{background:var(--ink); border-color:var(--border-dark); color:var(--text-light);}
   .formatted-output.empty{color:var(--text-muted-dark); font-style:italic;}
@@ -273,15 +272,14 @@
   .modal-actions{display:flex; gap:12px; justify-content:flex-end; margin-top:22px;}
 
   /* Multi-Chat Assistant Layout - FIXED INNER SCROLL WINDOW & NO OVERFLOW */
-  .chat-layout{display:grid; grid-template-columns:280px 1fr; gap:18px; height:calc(100vh - 220px); min-height:480px; overflow:hidden;}
-  .chat-layout > *{min-width:0; min-height:0;}
+  .chat-layout{display:grid; grid-template-columns:280px 1fr; gap:18px; height:calc(100vh - 220px); min-height:480px;}
   @media(max-width:800px){.chat-layout{grid-template-columns:1fr; height:auto;}}
   .chat-sessions-panel{
-    background:var(--paper); border:1px solid var(--border-light); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; overflow-x:hidden; min-height:0;
+    background:var(--paper); border:1px solid var(--border-light); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; height:100%;
   }
   body.dark .chat-sessions-panel{background:var(--ink); border-color:var(--border-dark);}
   .session-item{
-    padding:11px 14px; border-radius:10px; border:1px solid transparent; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; background:var(--panel-light); transition:all .15s; overflow-wrap:anywhere;
+    padding:11px 14px; border-radius:10px; border:1px solid transparent; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; background:var(--panel-light); transition:all .15s;
   }
   body.dark .session-item{background:var(--panel-dark);}
   .session-item:hover{border-color:var(--indigo-soft);}
@@ -293,14 +291,14 @@
   }
   .session-delete-btn:hover{color:var(--red); background:var(--red-soft);}
 
-  .chat-window{flex:1; min-height:0; max-height:100%; overflow-y:auto; overflow-x:hidden; padding:16px; display:flex; flex-direction:column; gap:14px; background:var(--paper); border:1px solid var(--border-light); border-radius:12px;}
+  .chat-window{flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:14px; background:var(--paper); border:1px solid var(--border-light); border-radius:12px; height:100%;}
   body.dark .chat-window{background:var(--ink); border-color:var(--border-dark);}
-  .chat-msg{max-width:85%; padding:14px 18px; border-radius:14px; font-size:13.5px; line-height:1.65; overflow-wrap:anywhere; word-break:break-word;}
+  .chat-msg{max-width:85%; padding:14px 18px; border-radius:14px; font-size:13.5px; line-height:1.65;}
   .chat-msg.user{align-self:flex-end; background:var(--indigo); color:white; border-bottom-right-radius:2px;}
   .chat-msg.assistant{align-self:flex-start; background:var(--panel-light); border:1px solid var(--border-light); border-bottom-left-radius:2px;}
   body.dark .chat-msg.assistant{background:var(--panel-dark-2); border-color:var(--border-dark);}
-  .chat-input-row{display:flex; gap:12px; margin-top:12px; flex-shrink:0;}
-  .chat-input-row input{flex:1; min-width:0;}
+  .chat-input-row{display:flex; gap:12px; margin-top:12px;}
+  .chat-input-row input{flex:1;}
 
   /* Jobs UI Redesign */
   .job-card{background:var(--panel-light); border:1px solid var(--border-light); border-radius:var(--radius); padding:18px; cursor:pointer; transition:all .18s;}
@@ -331,8 +329,14 @@
   .resume-paper p{margin:0 0 8px 0; color:#000000;}
   .resume-paper strong{color:#000000; font-weight:700;}
 
+  /* PRINT CSS STYLES FOR NATIVE SELECTABLE VECTOR TEXT PDF */
   /* PRINT CSS STYLES FOR NATIVE SELECTABLE VECTOR TEXT PDF - REMOVES URL, TIME & DATE HEADERS/FOOTERS */
   @media print {
+    body { background: white !important; color: black !important; height: auto !important; overflow: visible !important; }
+    .sidebar, .topbar, .app-footer, .card > div:not(#fmtResultArea), .btn-primary, .btn-ghost, .dropzone, .field, .section-title, .section-sub { display: none !important; }
+    .app, .main, .shell, .card { height: auto !important; overflow: visible !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+    #fmtResultArea { display: block !important; }
+    .resume-paper { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; font-family: 'Calibri', 'Segoe UI', Arial, sans-serif !important; }
     @page {
       margin: 0; /* Suppresses browser headers (Date/Title) and footers (URL) */
     }
@@ -572,7 +576,7 @@ function formatMarkdown(text) {
   lines.forEach(line => {
     let trimmed = line.trim();
     const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
-    
+
     if (trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
       if (inOl) { out.push('</ol>'); inOl = false; }
       if (!inUl) { out.push('<ul>'); inUl = true; }
@@ -650,7 +654,7 @@ function formatResumePaper(text) {
     // 4. Organisation Line (Organisation: Company Name, Location [LEFT] and Dates [RIGHT])
     if (trimmed.toLowerCase().startsWith('organisation:') || trimmed.toLowerCase().startsWith('organization:')) {
       if (inUl) { out.push('</ul>'); inUl = false; }
-      
+
       let fullLine = trimmed.replace(/\*/g, '').trim();
       let orgText = fullLine;
       let datePart = '';
@@ -1023,7 +1027,7 @@ function renderCrmView(){
   document.getElementById('crmSearchInput').oninput=(e)=>{crmSearch=e.target.value; renderCrmTable();};
   document.getElementById('crmStageSelect').onchange=(e)=>{crmStageFilter=e.target.value; renderCrmPipeline(); renderCrmTable();};
   document.getElementById('crmAddBtn').onclick=()=>openCandidateModal(null);
-  
+
   document.getElementById('selectAllCand').onchange=(e)=>{
     const checked = e.target.checked;
     document.querySelectorAll('.cand-checkbox').forEach(cb=>{
@@ -1169,7 +1173,7 @@ function openCandidateDetailsModal(id){
   document.getElementById('cdRole').textContent = c.roleApplied;
   document.getElementById('cdEmail').textContent = c.email || 'N/A';
   document.getElementById('cdPhone').textContent = c.phone || 'N/A';
-  
+
   const info = stageInfo(c.stage);
   const pill = document.getElementById('cdStagePill');
   pill.textContent = info.label;
@@ -1443,7 +1447,7 @@ async function processBatchFiles(files){
       };
       candidates.push(newCand);
       saveCandidates(); logActivity(`Batch imported resume: ${newCand.fullName}`);
-      
+
       const skillsHtml = detectedSkills.slice(0, 4).map(s=>`<span class="skill-tag">${esc(s)}</span>`).join('');
       item.querySelector('span:last-child').innerHTML = `<strong style="color:var(--green);">✓ ${esc(newCand.fullName)}</strong> ${skillsHtml}`;
     }catch(err){
@@ -1559,14 +1563,14 @@ CRITICAL CONSTRAINTS:
 
     try {
       const formattedOutput = await callClaude(systemPrompt, `RESUME TO REFORMAT:\n${rawText}`);
-      
+
       const paper = document.getElementById('formattedResumePaper');
       paper.innerHTML = formatResumePaper(formattedOutput);
-      
+
       document.getElementById('fmtResultArea').style.display = 'block';
       document.getElementById('fmtPdfBtn').style.display = 'inline-flex';
       document.getElementById('fmtDocBtn').style.display = 'inline-flex';
-      
+
       btn.disabled = false;
       btn.innerHTML = origText;
       showToast('Resume standardized to exact Calibri layout!');
@@ -2341,4 +2345,5 @@ if (document.readyState === 'interactive' || document.readyState === 'complete')
 }
 </script>
 </body>
+</html>
 </html>
