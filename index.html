@@ -176,6 +176,21 @@
   .formatted-output li{margin-bottom:6px;}
   .formatted-output p{margin:0 0 12px 0;}
 
+  /* ELEGANT BOOLEAN CODE BLOCK CONTAINERS WITH COPY BUTTONS */
+  .code-box {
+    background:#0F172A; color:#E2E8F0; border-radius:10px; border:1px solid #334155; margin:14px 0; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.2);
+  }
+  .code-box-header {
+    display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:8px 14px; font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:#94A3B8; border-bottom:1px solid #334155;
+  }
+  .copy-code-btn {
+    background:var(--indigo); color:white; border:none; border-radius:6px; padding:4px 10px; font-size:11px; font-weight:600; cursor:pointer; font-family:var(--font-body); transition:all .15s;
+  }
+  .copy-code-btn:hover { background:#4F46E5; }
+  .code-box-content {
+    padding:14px 16px; margin:0; font-family:var(--font-mono); font-size:13px; line-height:1.6; overflow-x:auto; white-space:pre-wrap; word-break:break-all; color:#38BDF8;
+  }
+
   .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
 
@@ -551,10 +566,38 @@ function updateClock(){
 setInterval(updateClock, 1000);
 updateClock();
 
-/* Advanced Markdown Engine - FIXES RAW #### HEADERS & NUMBERED LIST BUG */
+/* Copy Code Text Helper */
+function copyCodeText(btn) {
+  const codeEl = btn.closest('.code-box').querySelector('code');
+  if(!codeEl) return;
+  const text = codeEl.innerText || codeEl.textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    setTimeout(()=> { btn.textContent = orig; }, 2000);
+  }).catch(()=>{
+    showToast('Failed to copy to clipboard', true);
+  });
+}
+
+/* Advanced Markdown Engine with Code Box Parser & Corrected List Numbering */
 function formatMarkdown(text) {
   if (!text) return '';
-  let html = text
+  
+  // 1. Process ```code blocks``` first into styled copyable boxes
+  let html = text.replace(/```(?:[a-zA-Z0-9]+)?\n([\s\S]*?)```/g, (match, code) => {
+    const codeEscaped = code.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<div class="code-box">
+      <div class="code-box-header">
+        <span>BOOLEAN / SEARCH QUERY</span>
+        <button class="copy-code-btn" onclick="copyCodeText(this)">📋 Copy String</button>
+      </div>
+      <pre class="code-box-content"><code>${codeEscaped}</code></pre>
+    </div>`;
+  });
+
+  // 2. Process inline formatting
+  html = html
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
     .replace(/^### (.*$)/gim, '<h3>$1</h3>')
@@ -573,6 +616,14 @@ function formatMarkdown(text) {
     let trimmed = line.trim();
     const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
     
+    // Skip code-box containers from line-by-line paragraph wrapping
+    if (trimmed.includes('<div class="code-box">') || trimmed.includes('</div>') || trimmed.includes('<pre') || trimmed.includes('</pre>')) {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      if (inOl) { out.push('</ol>'); inOl = false; }
+      out.push(trimmed);
+      return;
+    }
+
     if (trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ') || trimmed.startsWith('+ ')) {
       if (inOl) { out.push('</ol>'); inOl = false; }
       if (!inUl) { out.push('<ul>'); inUl = true; }
@@ -606,7 +657,6 @@ function formatMarkdown(text) {
 function formatResumePaper(text) {
   if (!text) return '';
 
-  // Clean hallucinated HTML tags to prevent raw code leakage
   let clean = text
     .replace(/<center>/gi, '').replace(/<\/center>/gi, '')
     .replace(/<b>/gi, '**').replace(/<\/b>/gi, '**')
@@ -1493,7 +1543,7 @@ function renderFormatterView(){
         <div class="dropzone" id="fmtDropzone" style="padding:20px;">
           <div class="dropzone-text">📎 Attach Candidate Resume File to Format</div>
         </div>
-        <input type="file" id="fmtFileInput" accept=".pdf,.docx,.txt" style="display:none;">
+        <input type="file" id="fmtFileInput" accept=".pdf,.docx,.txt" style="style:none;">
       </div>
 
       <div class="field">
@@ -2444,19 +2494,40 @@ function renderBooleanView(){
       return;
     }
 
-    const systemPrompt = `You are a Master Talent Sourcing Specialist and Boolean Architect.
-Generate optimized, error-free Boolean search strings formatted specifically for different sourcing engines.`;
+    const systemPrompt = `You are a Master Talent Sourcing Specialist and Principal Boolean Architect.
+You generate 100% accurate, error-free, high-yield Boolean search strings optimized specifically for different sourcing engines.
 
-    const userPrompt = `Create multiple specialized Boolean search strings for:
+CRITICAL SOURCING RULES FOR REAL CANDIDATE RESULTS:
+1. LINKEDIN RECRUITER / SALES NAVIGATOR RULE:
+   - Do NOT use 'intitle:' or 'location:' operators on LinkedIn! LinkedIn search does NOT support these Google operators.
+   - Use clean title synonyms in quotes separated by uppercase OR: ("Job Title 1" OR "Job Title 2" OR "Synonym 3")
+   - Combine with mandatory skills and location synonyms using uppercase AND/OR: AND (Skill1 OR Skill2) AND (Location1 OR Location2)
+
+2. GOOGLE X-RAY LINKEDIN PROFILES RULE:
+   - Use site:linkedin.com/in/ (or site:country.linkedin.com/in/)
+   - Never combine double 'site:' operators on separate lines without OR!
+   - Include noise filter at the end: -intitle:jobs -inurl:dir -inurl:jobs -inurl:company
+   - Example: site:linkedin.com/in/ ("Title 1" OR "Title 2") (Skill1 OR Skill2) ("Location1" OR "Location2") -intitle:jobs -inurl:dir
+
+3. GITHUB TECHNICAL SOURCING RULE:
+   - Use site:github.com with developer profile signatures: ("joined on" OR "contributions" OR "followers")
+   - Combine with tech stack and location.
+
+4. GOOGLE FILETYPE CV/RESUME SOURCING RULE:
+   - Use (filetype:pdf OR filetype:docx) (resume OR cv) + target titles + skills + location.
+
+Always wrap EVERY generated Boolean search string in triple backticks with 'boolean' syntax highlighting (e.g. \`\`\`boolean ... \`\`\`) so that a 1-click '📋 Copy String' button appears above each query.`;
+
+    const userPrompt = `Create specialized, error-free Boolean search strings for:
 - Job Titles: ${titles || 'Software Engineer'}
 - Key Skills: ${skills || 'General Tech'}
 - Target Location: ${loc || 'Any'}
 
 Please output 4 distinct, copyable Boolean search blocks with brief explanation for each:
 1. LinkedIn Recruiter / Sales Navigator Search String
-2. Google X-Ray Search String (site:linkedin.com/in/ OR site:github.com)
-3. GitHub / Technical Sourcing String
-4. Executive / Niche Broad Search String`;
+2. Google X-Ray Search String (site:linkedin.com/in/)
+3. GitHub / Technical Sourcing String (site:github.com)
+4. Google Filetype Resume/CV Search String ((filetype:pdf OR filetype:docx))`;
 
     await runAiTask(document.getElementById('boolBtn'), out, systemPrompt, userPrompt);
     logActivity(`Generated AI Boolean sourcing strings`);
