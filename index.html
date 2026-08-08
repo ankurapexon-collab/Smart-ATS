@@ -66,7 +66,7 @@
   .designer-tag{font-size:11px; font-weight:600; color:var(--text-muted-dark); text-align:center;}
   body.dark .designer-tag{color:var(--text-muted-light);}
 
-  /* Main Shell - FIXED SCROLLING CONTAINER */
+  /* Main Shell */
   .main{flex:1; min-width:0; display:flex; flex-direction:column; height:100vh; overflow-y:auto;}
   .topbar{
     display:flex; align-items:center; justify-content:space-between;
@@ -156,7 +156,7 @@
   .ai-badge{display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--purple); background:var(--purple-soft); padding:3px 9px; border-radius:20px; margin-left:8px; vertical-align:middle;}
   body.dark .ai-badge{background:rgba(139,92,246,0.22);}
 
-  /* Markdown Formatted Output Engine & Corrected List CSS */
+  /* Markdown Formatted Output Engine */
   .formatted-output{
     background:var(--paper); border:1px solid var(--border-light); border-radius:12px;
     padding:22px; margin-top:16px; font-size:14px; line-height:1.7; color:var(--text-dark);
@@ -287,7 +287,7 @@
   .modal h2{font-family:var(--font-display); font-size:19px; margin:0 0 20px 0;}
   .modal-actions{display:flex; gap:12px; justify-content:flex-end; margin-top:22px;}
 
-  /* Multi-Chat Assistant Layout - FIXED INNER SCROLL WINDOW & NO OVERFLOW */
+  /* Multi-Chat Assistant Layout */
   .chat-layout{display:grid; grid-template-columns:280px 1fr; gap:18px; height:calc(100vh - 220px); min-height:480px; overflow:hidden;}
   .chat-layout > *{min-width:0; min-height:0;}
   @media(max-width:800px){.chat-layout{grid-template-columns:1fr; height:auto;}}
@@ -956,12 +956,12 @@ const VIEW_META = {
   search:{title:'Candidate Search', sub:'Filter your candidate database.'},
   matcher:{title:'Resume Matcher', sub:'Bulk resume matching against JDs & Word Report Export.'},
   jd:{title:'Job Description Generator', sub:'Generate JDs in exact standardized format.'},
-  assistant:{title:'AI Recruiter Assistant', sub:'ChatGPT-style multi-chat sessions with full memory persistence.'},
+  assistant:{title:'AI Recruiter Assistant', sub:'ChatGPT-style multi-chat sessions with file upload analysis & full memory persistence.'},
   visa:{title:'AI Global Visa & Immigration Expert', sub:'Instant immigration advisory, work permit rules, fees, timelines & sponsorship criteria.'},
   legal:{title:'AI Legal Expert', sub:'Multi-jurisdiction legal advisory, contract & SOW generation, and document review.'},
-  email:{title:'Email Generator', sub:'Draft candidate outreach emails.'},
-  linkedin:{title:'LinkedIn Message', sub:'Outreach messages.'},
-  boolean:{title:'AI Boolean Generator', sub:'Smart multi-platform Boolean strings.'},
+  email:{title:'Email Generator', sub:'Draft candidate outreach emails with preset or custom scenarios.'},
+  linkedin:{title:'LinkedIn Message', sub:'Outreach messages with preset or custom scenarios.'},
+  boolean:{title:'AI AST Boolean Generator', sub:'Smart multi-platform Boolean compiler driven by AST & Sourcing Engine rules.'},
   interview:{title:'Technical Interview Planner', sub:'Comprehensive 40-question interview question kits.'},
   analytics:{title:'Recruitment Analytics', sub:'Pipeline health.'},
 };
@@ -1543,7 +1543,7 @@ function renderFormatterView(){
         <div class="dropzone" id="fmtDropzone" style="padding:20px;">
           <div class="dropzone-text">📎 Attach Candidate Resume File to Format</div>
         </div>
-        <input type="file" id="fmtFileInput" accept=".pdf,.docx,.txt" style="style:none;">
+        <input type="file" id="fmtFileInput" accept=".pdf,.docx,.txt" style="display:none;">
       </div>
 
       <div class="field">
@@ -1986,14 +1986,15 @@ Use "-" as the only bullet character throughout. Never use "*", "+", or other sy
 }
 
 /* =========================================================
-   8. AI RECRUITER CHAT
+   8. AI RECRUITER CHAT (WITH FILE ATTACHMENTS & OUTPUT EXPORT)
 ========================================================= */
 let chatSessions = safeLoad(SESSIONS_KEY, ()=>[{
   id: 'session-1',
   title: 'Java Developer Screening',
-  messages: [{role:'assistant', content:'Hello Ankur! I am your AI Recruiter assistant. How can I help you today?'}]
+  messages: [{role:'assistant', content:'Hello Ankur! I am your AI Recruiter assistant. How can I help you today? You can attach candidate resumes or contracts below for instant analysis.'}]
 }]);
 let activeSessionId = chatSessions[0]?.id || 'session-1';
+let chatAttachedFileText = '';
 
 function saveSessions(){ localStorage.setItem(SESSIONS_KEY, JSON.stringify(chatSessions)); }
 
@@ -2004,7 +2005,7 @@ function renderAssistantView(){
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
         <div>
           <p class="section-title">AI Recruiter Assistant</p>
-          <p class="section-sub">Multi-session recruiter advisor with full memory persistence.</p>
+          <p class="section-sub">Multi-session recruiter advisor with file attachment analysis, memory persistence, and PDF/Word export.</p>
         </div>
         <button class="btn-primary btn-small" id="newChatBtn">+ New Chat Session</button>
       </div>
@@ -2013,9 +2014,15 @@ function renderAssistantView(){
         <div class="chat-sessions-panel" id="sessionsPanel"></div>
         <div style="display:flex; flex-direction:column; height:100%; min-height:0;">
           <div class="chat-window" id="chatWindow"></div>
-          <div class="chat-input-row">
-            <input type="text" id="chatInput" placeholder="Ask screening questions, sourcing boolean, strategy...">
-            <button class="btn-primary" id="chatSendBtn">Send</button>
+          
+          <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
+            <div id="chatFileStatus" style="font-size:12px; font-weight:600; color:var(--indigo);"></div>
+            <div class="chat-input-row">
+              <button class="btn-ghost btn-small" id="chatAttachBtn" title="Attach file to chat" style="padding:8px 12px;">📎 Attach File</button>
+              <input type="file" id="chatFileInput" accept=".pdf,.docx,.txt" style="display:none;">
+              <input type="text" id="chatInput" placeholder="Ask screening questions, analyze attached CV, sourcing boolean, strategy...">
+              <button class="btn-primary" id="chatSendBtn">Send</button>
+            </div>
           </div>
         </div>
       </div>
@@ -2029,7 +2036,7 @@ function renderAssistantView(){
     const newS = {
       id: 'session-' + Date.now(),
       title: 'New Conversation ' + (chatSessions.length+1),
-      messages: [{role:'assistant', content:'New chat session started. Ask me anything!'}]
+      messages: [{role:'assistant', content:'New chat session started. Ask me anything or attach a file!'}]
     };
     chatSessions.unshift(newS);
     activeSessionId = newS.id;
@@ -2038,16 +2045,42 @@ function renderAssistantView(){
     renderActiveChatMessages();
   };
 
+  const fileBtn = document.getElementById('chatAttachBtn');
+  const fileInput = document.getElementById('chatFileInput');
+  const fileStatus = document.getElementById('chatFileStatus');
+
+  fileBtn.onclick = () => fileInput.click();
+  fileInput.onchange = async () => {
+    if(fileInput.files.length){
+      fileStatus.textContent = 'Parsing attached file...';
+      try{
+        chatAttachedFileText = await extractTextFromFile(fileInput.files[0]);
+        fileStatus.textContent = `📎 Attached: ${fileInput.files[0].name} (Ready for analysis)`;
+        showToast('File attached to chat!');
+      }catch(e){
+        fileStatus.textContent = '⚠ File parse error: ' + e.message;
+      }
+    }
+  };
+
   const send=async ()=>{
     const input=document.getElementById('chatInput');
-    const text=input.value.trim();
-    if(!text) return;
+    let text=input.value.trim();
+    if(!text && !chatAttachedFileText) return;
 
     const session = chatSessions.find(s=>s.id===activeSessionId);
     if(!session) return;
 
-    session.messages.push({role:'user',content:text});
-    if(session.messages.length===2){ session.title = text.slice(0, 24) + '...'; }
+    let fullUserMsg = text;
+    if(chatAttachedFileText){
+      fullUserMsg = (text ? text + '\n\n' : '') + `[ATTACHED FILE TEXT]:\n${chatAttachedFileText}`;
+      chatAttachedFileText = '';
+      fileStatus.textContent = '';
+      fileInput.value = '';
+    }
+
+    session.messages.push({role:'user',content:fullUserMsg});
+    if(session.messages.length===2){ session.title = text.slice(0, 24) || 'File Analysis'; }
     saveSessions();
     input.value='';
     renderChatSessionsList();
@@ -2057,7 +2090,7 @@ function renderAssistantView(){
     btn.disabled=true;
     try{
       const reply = await callClaude(
-        'You are an expert Talent Acquisition Advisor. If asked to write or generate a Job Description at any point, you MUST use exactly this structure: "Job Title / Location / About the Role / Key Responsibilities / Key Skills & Qualifications / Preferred Qualifications" — and use "-" as the only bullet character throughout, never "*", "+", "•", or other symbols. Keep this exact structure every single time, with no variation.',
+        'You are an expert Talent Acquisition & Boolean Sourcing Advisor. If asked to write a Job Description, use Job Title/Location/About the Role/Key Responsibilities/Key Skills & Qualifications/Preferred Qualifications with "-" bullets. If asked for Boolean strings, compile them using AST rules for LinkedIn Recruiter, Google X-Ray, GitHub, and SQL.',
         session.messages.slice(-8).map(m => (m.role==='user'?'Recruiter':'You') + ': ' + m.content).join('\n\n')
       );
       session.messages.push({role:'assistant',content:reply});
@@ -2403,7 +2436,7 @@ Core rules:
 }
 
 /* =========================================================
-   10. EMAIL GENERATOR
+   10. EMAIL GENERATOR (WITH PRESET & CUSTOM COMMAND SCENARIO)
 ========================================================= */
 function renderEmailView(){
   const shell=document.getElementById('shell');
@@ -2413,12 +2446,18 @@ function renderEmailView(){
         <div class="field"><label>Candidate Name</label><input type="text" id="emCandidate" placeholder="Priya Sharma"></div>
         <div class="field"><label>Role</label><input type="text" id="emRole" placeholder="Data Engineer with Azure Experience"></div>
       </div>
-      <div class="field"><label>Purpose</label>
+      <div class="field"><label>Email Purpose Preset</label>
         <select id="emPurpose">
           <option>Initial Outreach</option><option>Interview Invitation</option>
           <option>Offer Letter Intro</option><option>Respectful Rejection</option>
         </select>
       </div>
+
+      <div class="field">
+        <label>Custom Outreach Command / Specific Scenario (Optional)</label>
+        <textarea id="emCustomPrompt" style="min-height:90px;" placeholder="e.g. Draft a warm follow-up email after 2 weeks for a Senior Azure Architect who ghosted after the tech interview, offering a 10% salary bump and flexible remote work options."></textarea>
+      </div>
+
       <button class="btn-primary" id="emBtn">Draft Email <span class="ai-badge">AI</span></button>
       <div class="formatted-output empty" id="emOutput">Drafted email will appear here...</div>
     </div>
@@ -2427,16 +2466,23 @@ function renderEmailView(){
     const name=document.getElementById('emCandidate').value.trim();
     const role=document.getElementById('emRole').value.trim();
     const purpose=document.getElementById('emPurpose').value;
+    const customPrompt=document.getElementById('emCustomPrompt').value.trim();
     const out=document.getElementById('emOutput');
-    if(!name || !role){ showToast('Please enter candidate name and role', true); return; }
+
+    if(!name && !customPrompt){ showToast('Please enter candidate name or a custom scenario', true); return; }
+
+    const userPrompt = customPrompt 
+      ? `Draft an email with Subject line based on this scenario:\nCandidate Name: ${name || 'Candidate'}\nRole: ${role || 'Target Role'}\nCustom Scenario: ${customPrompt}`
+      : `Purpose: ${purpose}\nCandidate: ${name}\nRole: ${role}`;
+
     await runAiTask(document.getElementById('emBtn'), out,
       'Write professional recruitment emails with Subject line and polite body.',
-      `Purpose: ${purpose}\nCandidate: ${name}\nRole: ${role}`);
+      userPrompt);
   };
 }
 
 /* =========================================================
-   11. LINKEDIN MESSAGE
+   11. LINKEDIN MESSAGE (WITH PRESET & CUSTOM COMMAND SCENARIO)
 ========================================================= */
 function renderLinkedinView(){
   const shell=document.getElementById('shell');
@@ -2446,6 +2492,12 @@ function renderLinkedinView(){
         <div class="field"><label>Candidate Name</label><input type="text" id="liCandidate" placeholder="Arjun Mehta"></div>
         <div class="field"><label>Target Role</label><input type="text" id="liRole" placeholder="Product Designer"></div>
       </div>
+
+      <div class="field">
+        <label>Custom Outreach Context / Personal Note (Optional)</label>
+        <textarea id="liCustomPrompt" style="min-height:90px;" placeholder="e.g. Mention we met at AWS Summit London, compliment their recent post on Databricks Lakehouse, and invite them for a 10-min coffee chat."></textarea>
+      </div>
+
       <button class="btn-primary" id="liBtn">Generate LinkedIn Note <span class="ai-badge">AI</span></button>
       <div class="formatted-output empty" id="liOutput">Generated message will appear here...</div>
     </div>
@@ -2453,23 +2505,30 @@ function renderLinkedinView(){
   document.getElementById('liBtn').onclick=async ()=>{
     const name=document.getElementById('liCandidate').value.trim();
     const role=document.getElementById('liRole').value.trim();
+    const customPrompt=document.getElementById('liCustomPrompt').value.trim();
     const out=document.getElementById('liOutput');
-    if(!name || !role){ showToast('Please enter name and role', true); return; }
+
+    if(!name && !customPrompt){ showToast('Please enter candidate name or a custom scenario', true); return; }
+
+    const userPrompt = customPrompt
+      ? `Candidate: ${name || 'Candidate'}\nRole: ${role || 'Role'}\nCustom Context: ${customPrompt}`
+      : `Candidate: ${name}\nRole: ${role}`;
+
     await runAiTask(document.getElementById('liBtn'), out,
       'Write short, warm LinkedIn connection requests strictly under 300 characters.',
-      `Candidate: ${name}\nRole: ${role}`);
+      userPrompt);
   };
 }
 
 /* =========================================================
-   12. AI BOOLEAN SEARCH GENERATOR
+   12. AI AST BOOLEAN SEARCH COMPILER & GENERATOR
 ========================================================= */
 function renderBooleanView(){
   const shell=document.getElementById('shell');
   shell.innerHTML=`
     <div class="card">
-      <p class="section-title">AI Multi-Platform Boolean Search Generator</p>
-      <p class="section-sub">Uses AI to analyze role requirements and output targeted Boolean strings for LinkedIn Recruiter, Google X-Ray, GitHub, and Executive Search.</p>
+      <p class="section-title">AI Multi-Platform Boolean Search Generator & Compiler</p>
+      <p class="section-sub">Driven by AST Lexer & Parser rules. Generates high-yield, error-free Boolean search strings for LinkedIn Recruiter, Google X-Ray, GitHub, and Elasticsearch/SQL.</p>
 
       <div class="two-col">
         <div class="field"><label>Target Job Titles (comma separated)</label><input type="text" id="boolTitles" placeholder="Data Engineer, Azure Data Engineer, Databricks Engineer"></div>
@@ -2494,31 +2553,33 @@ function renderBooleanView(){
       return;
     }
 
-    const systemPrompt = `You are a Master Talent Sourcing Specialist and Principal Boolean Architect.
-You generate 100% accurate, error-free, high-yield Boolean search strings optimized specifically for different sourcing engines.
+    const systemPrompt = `You are a Master Talent Sourcing Specialist, Lexer/Parser Architect, and Principal Boolean Compiler.
+You generate 100% accurate, error-free, high-yield Boolean search strings optimized specifically for different sourcing engines based on AST Lexer/Parser rules:
 
-CRITICAL SOURCING RULES FOR REAL CANDIDATE RESULTS:
-1. LINKEDIN RECRUITER / SALES NAVIGATOR RULE:
-   - Do NOT use 'intitle:' or 'location:' operators on LinkedIn! LinkedIn search does NOT support these Google operators.
-   - Use clean title synonyms in quotes separated by uppercase OR: ("Job Title 1" OR "Job Title 2" OR "Synonym 3")
-   - Combine with mandatory skills and location synonyms using uppercase AND/OR: AND (Skill1 OR Skill2) AND (Location1 OR Location2)
+1. LEXER & TOKENIZER RULES:
+   - LPAREN / RPAREN: '(' and ')' for explicit precedence grouping.
+   - AND / OR / NOT: Standard uppercase operators.
+   - QUOTED_TERM: Exact phrases wrapped in double quotes "...".
+   - IMPLICIT AND: If two terms/groups are placed adjacent without an operator (e.g. "Java" "Developer"), automatically insert an implicit AND.
 
-2. GOOGLE X-RAY LINKEDIN PROFILES RULE:
-   - Use site:linkedin.com/in/ (or site:country.linkedin.com/in/)
-   - Never combine double 'site:' operators on separate lines without OR!
-   - Include noise filter at the end: -intitle:jobs -inurl:dir -inurl:jobs -inurl:company
-   - Example: site:linkedin.com/in/ ("Title 1" OR "Title 2") (Skill1 OR Skill2) ("Location1" OR "Location2") -intitle:jobs -inurl:dir
+2. OPERATOR PRECEDENCE ORDER (Highest to Lowest):
+   1. Parentheses ()
+   2. Quoted Phrases / Exact Terms
+   3. NOT operator
+   4. AND operator (including implicit AND)
+   5. OR operator
 
-3. GITHUB TECHNICAL SOURCING RULE:
-   - Use site:github.com with developer profile signatures: ("joined on" OR "contributions" OR "followers")
-   - Combine with tech stack and location.
+3. CRITICAL ENGINE COMPILATION DELIVERABLES:
+   a) LinkedIn Recruiter / Sales Navigator String (No fake operators like intitle: or location:; clean titles, skill groups, uppercase AND/OR).
+   b) Google X-Ray LinkedIn Profile Query (site:linkedin.com/in/ + title phrases + skill groups + noise filters -intitle:jobs -inurl:dir).
+   c) GitHub Technical Sourcing Query (site:github.com + developer profile signatures ("joined on" OR "contributions") + tech stack).
+   d) Elasticsearch / SQL Query Filter (Elasticsearch bool query / PostgreSQL tsquery syntax).
 
-4. GOOGLE FILETYPE CV/RESUME SOURCING RULE:
-   - Use (filetype:pdf OR filetype:docx) (resume OR cv) + target titles + skills + location.
+4. SYNTAX AUTO-REPAIR: Auto-close unbalanced parentheses/quotes. Sanitize special characters.
 
-Always wrap EVERY generated Boolean search string in triple backticks with 'boolean' syntax highlighting (e.g. \`\`\`boolean ... \`\`\`) so that a 1-click '📋 Copy String' button appears above each query.`;
+Always wrap EVERY generated Boolean search string in triple backticks with 'boolean' syntax tag (\`\`\`boolean ... \`\`\`) so that a 1-click '📋 Copy String' button appears above each query.`;
 
-    const userPrompt = `Create specialized, error-free Boolean search strings for:
+    const userPrompt = `Compile specialized, error-free Boolean search strings for:
 - Job Titles: ${titles || 'Software Engineer'}
 - Key Skills: ${skills || 'General Tech'}
 - Target Location: ${loc || 'Any'}
@@ -2527,10 +2588,10 @@ Please output 4 distinct, copyable Boolean search blocks with brief explanation 
 1. LinkedIn Recruiter / Sales Navigator Search String
 2. Google X-Ray Search String (site:linkedin.com/in/)
 3. GitHub / Technical Sourcing String (site:github.com)
-4. Google Filetype Resume/CV Search String ((filetype:pdf OR filetype:docx))`;
+4. Elasticsearch / PostgreSQL Query Syntax`;
 
     await runAiTask(document.getElementById('boolBtn'), out, systemPrompt, userPrompt);
-    logActivity(`Generated AI Boolean sourcing strings`);
+    logActivity(`Generated AI AST Boolean sourcing strings`);
   };
 }
 
