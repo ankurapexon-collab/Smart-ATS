@@ -1,5 +1,5 @@
 // api/chat.js
-// Vercel Serverless API — 8-Provider Multi-Key Failover Gateway with Zero-Crash Guard
+// Vercel Serverless API — Ultra-Resilient Engine with Fast 3.5s Failover & Emergency Keyless Backup
 
 const DEFAULT_SYSTEM = `You are TalentTrack AI, an elite enterprise Talent Acquisition, Sourcing, Legal & Immigration Intelligence assistant.
 Every question is asked in a professional business context, even if phrased ambiguously — for example, "boolean search" or "boolean string" ALWAYS means a candidate-sourcing search query, NEVER a programming language boolean data type, unless the user explicitly asks about writing code.
@@ -33,8 +33,8 @@ When asked to generate, parse, or optimize Boolean search strings, you MUST act 
    d) Elasticsearch / SQL Query Filter (Elasticsearch bool query / PostgreSQL tsquery syntax).
 4. SYNTAX AUTO-REPAIR: Auto-close unbalanced parentheses/quotes. Sanitize special characters. Always wrap every Boolean search string in triple backticks with 'boolean' syntax tag (\`\`\`boolean ... \`\`\`).`;
 
-// High-capacity free tier models prioritized
-const GROQ_MODELS = ['llama-3.1-8b-instant', 'gemma2-9b-it', 'mixtral-8x7b-32768', 'llama-3.3-70b-versatile'];
+// Active 2026 Model Slugs
+const GROQ_MODELS = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'gemma2-9b-it', 'llama-3.2-3b-preview'];
 const CEREBRAS_MODELS = ['llama3.1-8b', 'llama3.3-70b'];
 const GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-2.0-flash', 'gemini-1.5-pro'];
 const MISTRAL_MODELS = ['mistral-small-latest', 'open-mistral-7b'];
@@ -50,8 +50,8 @@ const OPENROUTER_MODELS = [
   'openchat/openchat-7b:free'
 ];
 
-const GLOBAL_DEADLINE_MS = 25000;
-const PER_ATTEMPT_TIMEOUT_MS = 6000;
+const GLOBAL_DEADLINE_MS = 26000;
+const PER_ATTEMPT_TIMEOUT_MS = 3500; // Fast 3.5s failover to cycle through keys rapidly
 const DEFAULT_MAX_TOKENS = 2048;
 const MAX_TOKENS_CEILING = 8000;
 
@@ -143,6 +143,35 @@ async function callOpenAIStyle(endpoint, modelName, apiKey, system, prompt, time
   );
 }
 
+// Emergency Keyless Fallback Engine (Pollinations AI Safety Net)
+async function callEmergencyKeylessFallback(system, prompt, timeoutMs) {
+  const combinedSystem = system ? `${system}\n\n${DEFAULT_SYSTEM}` : DEFAULT_SYSTEM;
+  try {
+    const { ok, data } = await safeFetchJson(
+      'https://text.pollinations.ai/openai',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'openai',
+          messages: [
+            { role: 'system', content: combinedSystem },
+            { role: 'user', content: prompt }
+          ]
+        })
+      },
+      timeoutMs
+    );
+    if (ok) {
+      const text = data?.choices?.[0]?.message?.content?.trim();
+      if (text && !isSafetyLabelOnly(text)) {
+        return { text, modelUsed: 'emergency-keyless/openai' };
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 export default async function handler(req, res) {
   const startTime = Date.now();
   const timeLeft = () => GLOBAL_DEADLINE_MS - (Date.now() - startTime);
@@ -197,14 +226,6 @@ export default async function handler(req, res) {
     if (!prompt) { res.status(400).json({ error: 'Missing "prompt" in request body.' }); return; }
     const maxTokens = clampMaxTokens(requestedMaxTokens);
 
-    if (!Object.values(activeKeys).some(Boolean)) {
-      res.status(400).json({
-        error: 'No API keys detected in Vercel Environment Variables. Set at least GROQ_API_KEYS or GEMINI_API_KEYS in Vercel, then redeploy.',
-        activeKeys,
-      });
-      return;
-    }
-
     let errors = [];
 
     const providers = [
@@ -213,7 +234,7 @@ export default async function handler(req, res) {
         keys: groqKeys,
         run: async (key) => {
           for (const model of GROQ_MODELS) {
-            if (timeLeft() < 1500) return null;
+            if (timeLeft() < 1200) return null;
             const { ok, status, data } = await callOpenAIStyle('https://api.groq.com/openai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
@@ -226,28 +247,11 @@ export default async function handler(req, res) {
         }
       },
       {
-        name: 'cerebras',
-        keys: cerebrasKeys,
-        run: async (key) => {
-          for (const model of CEREBRAS_MODELS) {
-            if (timeLeft() < 1500) return null;
-            const { ok, status, data } = await callOpenAIStyle('https://api.cerebras.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
-            if (ok) {
-              const text = data?.choices?.[0]?.message?.content?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `cerebras/${model}` };
-            }
-            if (status === 429 || status === 403) setKeyCooldown(key);
-            errors.push(`Cerebras (${model}): ${data?.error?.message || 'Failed status ' + status}`);
-          }
-          return null;
-        }
-      },
-      {
         name: 'gemini',
         keys: geminiKeys,
         run: async (key) => {
           for (const model of GEMINI_MODELS) {
-            if (timeLeft() < 1500) return null;
+            if (timeLeft() < 1200) return null;
             const { ok, status, data } = await callGemini(model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
@@ -260,11 +264,28 @@ export default async function handler(req, res) {
         }
       },
       {
+        name: 'cerebras',
+        keys: cerebrasKeys,
+        run: async (key) => {
+          for (const model of CEREBRAS_MODELS) {
+            if (timeLeft() < 1200) return null;
+            const { ok, status, data } = await callOpenAIStyle('https://api.cerebras.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            if (ok) {
+              const text = data?.choices?.[0]?.message?.content?.trim();
+              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `cerebras/${model}` };
+            }
+            if (status === 429 || status === 403) setKeyCooldown(key);
+            errors.push(`Cerebras (${model}): ${data?.error?.message || 'Failed status ' + status}`);
+          }
+          return null;
+        }
+      },
+      {
         name: 'mistral',
         keys: mistralKeys,
         run: async (key) => {
           for (const model of MISTRAL_MODELS) {
-            if (timeLeft() < 1500) return null;
+            if (timeLeft() < 1200) return null;
             const { ok, status, data } = await callOpenAIStyle('https://api.mistral.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
@@ -281,7 +302,7 @@ export default async function handler(req, res) {
         keys: (cloudflareAccountId && cloudflareApiToken) ? [cloudflareApiToken] : [],
         run: async (key) => {
           for (const model of CLOUDFLARE_MODELS) {
-            if (timeLeft() < 1500) return null;
+            if (timeLeft() < 1200) return null;
             const endpoint = `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/ai/v1/chat/completions`;
             const { ok, status, data } = await callOpenAIStyle(endpoint, model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
@@ -298,7 +319,7 @@ export default async function handler(req, res) {
         keys: sambanovaKeys,
         run: async (key) => {
           for (const model of SAMBANOVA_MODELS) {
-            if (timeLeft() < 1500) return null;
+            if (timeLeft() < 1200) return null;
             const { ok, status, data } = await callOpenAIStyle('https://api.sambanova.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
@@ -315,7 +336,7 @@ export default async function handler(req, res) {
         keys: openrouterKeys,
         run: async (key) => {
           for (const model of OPENROUTER_MODELS) {
-            if (timeLeft() < 1500) return null;
+            if (timeLeft() < 1200) return null;
             const { ok, status, data } = await callOpenAIStyle('https://openrouter.ai/api/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens, { 'HTTP-Referer': 'https://vercel.com', 'X-Title': 'TalentTrack Smart ATS' });
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
@@ -329,22 +350,26 @@ export default async function handler(req, res) {
       }
     ];
 
+    // Iterate across user-configured keys
     for (const provider of providers) {
-      if (provider.keys.length === 0) {
-        errors.push(`${provider.name}: No API key configured.`);
-        continue;
-      }
+      if (provider.keys.length === 0) continue;
       for (const key of provider.keys) {
-        if (isKeyCoolingDown(key)) {
-          errors.push(`${provider.name}: key in cooldown, rotating to next key.`);
-          continue;
-        }
-        if (timeLeft() < 1500) { errors.push(`${provider.name}: skipped due to execution time limit.`); break; }
+        if (isKeyCoolingDown(key)) continue;
+        if (timeLeft() < 1200) break;
         const result = await provider.run(key);
         if (result) {
           res.status(200).json({ ...result, activeKeys, elapsedMs: Date.now() - startTime });
           return;
         }
+      }
+    }
+
+    // EMERGENCY SAFETY NET: Try keyless fallback if all user keys are exhausted/rate-limited
+    if (timeLeft() > 2000) {
+      const emergencyRes = await callEmergencyKeylessFallback(system, prompt, Math.min(5000, timeLeft() - 500));
+      if (emergencyRes) {
+        res.status(200).json({ ...emergencyRes, activeKeys, elapsedMs: Date.now() - startTime, emergencyFallbackUsed: true });
+        return;
       }
     }
 
