@@ -66,7 +66,7 @@
   .designer-tag{font-size:11px; font-weight:600; color:var(--text-muted-dark); text-align:center;}
   body.dark .designer-tag{color:var(--text-muted-light);}
 
-  /* Main Shell - FIXED SCROLLING CONTAINER */
+  /* Main Shell */
   .main{flex:1; min-width:0; display:flex; flex-direction:column; height:100vh; overflow-y:auto;}
   .topbar{
     display:flex; align-items:center; justify-content:space-between;
@@ -580,25 +580,24 @@ function copyCodeText(btn) {
   });
 }
 
-/* Advanced Markdown Engine with Code Box Parser & Corrected List Numbering */
+/* Advanced Markdown Engine with Placeholders - FIXES RAW HTML LEAKAGE IN CODE BOXES */
 function formatMarkdown(text) {
   if (!text) return '';
   
-  // 1. Process ```code blocks``` first into styled copyable boxes
+  const codeBlocks = [];
+
+  // 1. Extract triple-backtick code blocks and replace with placeholders first
   let html = text.replace(/```(?:[a-zA-Z0-9]+)?\n([\s\S]*?)```/g, (match, code) => {
-    const codeEscaped = code.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return `<div class="code-box">
-      <div class="code-box-header">
-        <span>BOOLEAN / SEARCH QUERY</span>
-        <button class="copy-code-btn" onclick="copyCodeText(this)">📋 Copy String</button>
-      </div>
-      <pre class="code-box-content"><code>${codeEscaped}</code></pre>
-    </div>`;
+    const idx = codeBlocks.length;
+    codeBlocks.push(code.trim());
+    return `___CODE_BLOCK_${idx}___`;
   });
 
-  // 2. Process inline formatting
+  // 2. Escape raw HTML characters safely
   html = html
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
     .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
     .replace(/^### (.*$)/gim, '<h3>$1</h3>')
     .replace(/^## (.*$)/gim, '<h2>$1</h2>')
@@ -616,8 +615,8 @@ function formatMarkdown(text) {
     let trimmed = line.trim();
     const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
     
-    // Skip code-box containers from line-by-line paragraph wrapping
-    if (trimmed.includes('<div class="code-box">') || trimmed.includes('</div>') || trimmed.includes('<pre') || trimmed.includes('</pre>')) {
+    // Check if line is a code block placeholder
+    if (trimmed.startsWith('___CODE_BLOCK_') && trimmed.endsWith('___')) {
       if (inUl) { out.push('</ul>'); inUl = false; }
       if (inOl) { out.push('</ol>'); inOl = false; }
       out.push(trimmed);
@@ -650,7 +649,22 @@ function formatMarkdown(text) {
   if (inUl) out.push('</ul>');
   if (inOl) out.push('</ol>');
 
-  return out.join('');
+  let resultHtml = out.join('');
+
+  // 3. Re-inject styled HTML code boxes into placeholders
+  codeBlocks.forEach((codeText, idx) => {
+    const codeEscaped = codeText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const codeBoxHtml = `<div class="code-box">
+      <div class="code-box-header">
+        <span>BOOLEAN / SEARCH QUERY</span>
+        <button class="copy-code-btn" onclick="copyCodeText(this)">📋 Copy String</button>
+      </div>
+      <pre class="code-box-content"><code>${codeEscaped}</code></pre>
+    </div>`;
+    resultHtml = resultHtml.replace(`___CODE_BLOCK_${idx}___`, codeBoxHtml);
+  });
+
+  return resultHtml;
 }
 
 /* CUSTOM RESUME FORMATTER PARSER - CLEANS ALL RAW HTML TAGS & ENSURES ORGANISATION LEFT + DATES RIGHT ALIGNED */
@@ -2569,7 +2583,7 @@ You generate 100% accurate, error-free, high-yield Boolean search strings optimi
    5. OR operator
 
 3. CRITICAL ENGINE COMPILATION DELIVERABLES:
-   a) LinkedIn Recruiter / Sales Navigator String (No fake operators like intitle: or location:; clean titles, skill groups, uppercase AND/OR).
+   a) LinkedIn Recruiter / Sales Navigator String (NEVER use fake operators like title: or intitle: or location: on LinkedIn! Use clean title synonyms in quotes separated by uppercase OR: ("Title 1" OR "Title 2") AND (Skill1 OR Skill2) AND (Location1 OR Location2)).
    b) Google X-Ray LinkedIn Profile Query (site:linkedin.com/in/ + title phrases + skill groups + noise filters -intitle:jobs -inurl:dir).
    c) GitHub Technical Sourcing Query (site:github.com + developer profile signatures ("joined on" OR "contributions") + tech stack).
    d) Elasticsearch / SQL Query Filter (Elasticsearch bool query / PostgreSQL tsquery syntax).
