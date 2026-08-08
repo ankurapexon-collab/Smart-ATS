@@ -1,5 +1,5 @@
 // api/chat.js
-// Vercel Serverless API - Node 24 Native 8-Provider Multi-Key Engine (Zero-Crash Guarantee)
+// Vercel Serverless API — 8-Provider Multi-Key Rotation Engine with Zero-Crash Guard
 
 const DEFAULT_SYSTEM = `You are TalentTrack AI, an elite enterprise Talent Acquisition, Sourcing, Legal & Immigration Intelligence assistant.
 Every question is asked in a professional business context, even if phrased ambiguously — for example, "boolean search" or "boolean string" ALWAYS means a candidate-sourcing search query, NEVER a programming language boolean data type, unless the user explicitly asks about writing code.
@@ -18,7 +18,7 @@ When asked to generate, parse, or optimize Boolean search strings, you MUST act 
    - LPAREN / RPAREN: '(' and ')' for explicit precedence grouping.
    - AND / OR / NOT: Standard uppercase operators.
    - QUOTED_TERM: Exact phrases wrapped in double quotes "...".
-   - IMPLICIT AND: If two terms/groups are placed adjacent without an operator (e.g., "Java" "Developer"), automatically insert an implicit AND operator.
+   - IMPLICIT AND: If two terms/groups are placed adjacent without an operator (e.g., "Java" "Developer"), automatically insert an implicit AND.
 2. OPERATOR PRECEDENCE ORDER (Highest to Lowest):
    1. Parentheses ()
    2. Quoted Phrases / Exact Terms
@@ -33,7 +33,7 @@ When asked to generate, parse, or optimize Boolean search strings, you MUST act 
    d) Elasticsearch / SQL Query Filter (Elasticsearch bool query / PostgreSQL tsquery syntax).
 4. SYNTAX AUTO-REPAIR: Auto-close unbalanced parentheses/quotes. Sanitize special characters. Always wrap every Boolean search string in triple backticks with 'boolean' syntax tag (\`\`\`boolean ... \`\`\`).`;
 
-// High-capacity free tier models prioritized
+// Provider Model Candidates
 const GROQ_MODELS = ['llama-3.1-8b-instant', 'gemma2-9b-it', 'mixtral-8x7b-32768', 'llama-3.3-70b-versatile'];
 const CEREBRAS_MODELS = ['llama3.1-8b', 'llama3.3-70b'];
 const GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-2.0-flash', 'gemini-1.5-pro'];
@@ -55,6 +55,23 @@ const PER_ATTEMPT_TIMEOUT_MS = 6000;
 const DEFAULT_MAX_TOKENS = 2048;
 const MAX_TOKENS_CEILING = 8000;
 
+// In-Memory Key Cooldown Manager (5-minute blacklist for 429 rate-limited keys)
+const keyCooldowns = new Map();
+
+function isKeyCoolingDown(key) {
+  const expiry = keyCooldowns.get(key);
+  if (!expiry) return false;
+  if (Date.now() > expiry) {
+    keyCooldowns.delete(key);
+    return false;
+  }
+  return true;
+}
+
+function setKeyCooldown(key, cooldownMs = 300000) {
+  keyCooldowns.set(key, Date.now() + cooldownMs);
+}
+
 function clampMaxTokens(requested) {
   const n = parseInt(requested, 10);
   if (!n || n < 256) return DEFAULT_MAX_TOKENS;
@@ -65,6 +82,7 @@ function isSafetyLabelOnly(text) {
   return /^(user safety|safety)\s*:\s*(safe|unsafe)\.?$/i.test((text || '').trim());
 }
 
+// Support comma-separated API keys in environment variables
 function getKeys(envVal) {
   if (!envVal) return [];
   return envVal.split(',').map(k => k.trim()).filter(Boolean);
@@ -137,14 +155,14 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
-    const groqKeys = getKeys(process.env.GROQ_API_KEY);
-    const cerebrasKeys = getKeys(process.env.CEREBRAS_API_KEY);
-    const geminiKeys = getKeys(process.env.GEMINI_API_KEY);
-    const mistralKeys = getKeys(process.env.MISTRAL_API_KEY);
+    const groqKeys = getKeys(process.env.GROQ_API_KEYS || process.env.GROQ_API_KEY);
+    const cerebrasKeys = getKeys(process.env.CEREBRAS_API_KEYS || process.env.CEREBRAS_API_KEY);
+    const geminiKeys = getKeys(process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY);
+    const mistralKeys = getKeys(process.env.MISTRAL_API_KEYS || process.env.MISTRAL_API_KEY);
     const cloudflareAccountId = (process.env.CLOUDFLARE_ACCOUNT_ID || '').trim() || undefined;
     const cloudflareApiToken = (process.env.CLOUDFLARE_API_TOKEN || '').trim() || undefined;
-    const openrouterKeys = getKeys(process.env.OPENROUTER_API_KEY);
-    const sambanovaKeys = getKeys(process.env.SAMBANOVA_API_KEY);
+    const openrouterKeys = getKeys(process.env.OPENROUTER_API_KEYS || process.env.OPENROUTER_API_KEY);
+    const sambanovaKeys = getKeys(process.env.SAMBANOVA_API_KEYS || process.env.SAMBANOVA_API_KEY);
 
     const activeKeys = {
       GROQ: groqKeys.length > 0,
@@ -161,8 +179,8 @@ module.exports = async function handler(req, res) {
       res.status(200).json({
         status: 'diagnostic',
         message: anyKey
-          ? 'API key(s) detected. System active.'
-          : 'NO API keys detected. Set GROQ_API_KEY, GEMINI_API_KEY, or CEREBRAS_API_KEY in Vercel Environment Variables and redeploy.',
+          ? 'API key(s) detected. TalentTrack AI Gateway is active.'
+          : 'NO API keys detected. Set GROQ_API_KEYS or GEMINI_API_KEYS in Vercel Environment Variables and redeploy.',
         activeKeys,
       });
       return;
@@ -182,7 +200,7 @@ module.exports = async function handler(req, res) {
 
     if (!Object.values(activeKeys).some(Boolean)) {
       res.status(400).json({
-        error: 'No API keys detected in Vercel Environment Variables. Set at least GROQ_API_KEY or GEMINI_API_KEY in Vercel, then redeploy.',
+        error: 'No API keys detected in Vercel Environment Variables. Set at least GROQ_API_KEYS or GEMINI_API_KEYS in Vercel, then redeploy.',
         activeKeys,
       });
       return;
@@ -197,12 +215,13 @@ module.exports = async function handler(req, res) {
         run: async (key) => {
           for (const model of GROQ_MODELS) {
             if (timeLeft() < 1500) return null;
-            const { ok, data } = await callOpenAIStyle('https://api.groq.com/openai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            const { ok, status, data } = await callOpenAIStyle('https://api.groq.com/openai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
               if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `groq/${model}` };
             }
-            errors.push(`Groq (${model}): ${data?.error?.message || 'Failed'}`);
+            if (status === 429 || status === 403) setKeyCooldown(key);
+            errors.push(`Groq (${model}): ${data?.error?.message || 'Failed status ' + status}`);
           }
           return null;
         }
@@ -213,12 +232,13 @@ module.exports = async function handler(req, res) {
         run: async (key) => {
           for (const model of CEREBRAS_MODELS) {
             if (timeLeft() < 1500) return null;
-            const { ok, data } = await callOpenAIStyle('https://api.cerebras.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            const { ok, status, data } = await callOpenAIStyle('https://api.cerebras.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
               if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `cerebras/${model}` };
             }
-            errors.push(`Cerebras (${model}): ${data?.error?.message || 'Failed'}`);
+            if (status === 429 || status === 403) setKeyCooldown(key);
+            errors.push(`Cerebras (${model}): ${data?.error?.message || 'Failed status ' + status}`);
           }
           return null;
         }
@@ -229,12 +249,13 @@ module.exports = async function handler(req, res) {
         run: async (key) => {
           for (const model of GEMINI_MODELS) {
             if (timeLeft() < 1500) return null;
-            const { ok, data } = await callGemini(model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            const { ok, status, data } = await callGemini(model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
               if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `gemini/${model}` };
             }
-            errors.push(`Gemini (${model}): ${data?.error?.message || 'Failed'}`);
+            if (status === 429 || status === 403) setKeyCooldown(key);
+            errors.push(`Gemini (${model}): ${data?.error?.message || 'Failed status ' + status}`);
           }
           return null;
         }
@@ -245,12 +266,13 @@ module.exports = async function handler(req, res) {
         run: async (key) => {
           for (const model of MISTRAL_MODELS) {
             if (timeLeft() < 1500) return null;
-            const { ok, data } = await callOpenAIStyle('https://api.mistral.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            const { ok, status, data } = await callOpenAIStyle('https://api.mistral.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
               if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `mistral/${model}` };
             }
-            errors.push(`Mistral (${model}): ${data?.error?.message || 'Failed'}`);
+            if (status === 429 || status === 403) setKeyCooldown(key);
+            errors.push(`Mistral (${model}): ${data?.error?.message || 'Failed status ' + status}`);
           }
           return null;
         }
@@ -262,12 +284,12 @@ module.exports = async function handler(req, res) {
           for (const model of CLOUDFLARE_MODELS) {
             if (timeLeft() < 1500) return null;
             const endpoint = `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/ai/v1/chat/completions`;
-            const { ok, data } = await callOpenAIStyle(endpoint, model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            const { ok, status, data } = await callOpenAIStyle(endpoint, model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
               if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `cloudflare/${model}` };
             }
-            errors.push(`Cloudflare (${model}): ${data?.error?.message || 'Failed'}`);
+            errors.push(`Cloudflare (${model}): ${data?.error?.message || 'Failed status ' + status}`);
           }
           return null;
         }
@@ -278,12 +300,13 @@ module.exports = async function handler(req, res) {
         run: async (key) => {
           for (const model of SAMBANOVA_MODELS) {
             if (timeLeft() < 1500) return null;
-            const { ok, data } = await callOpenAIStyle('https://api.sambanova.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
+            const { ok, status, data } = await callOpenAIStyle('https://api.sambanova.ai/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
               if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `sambanova/${model}` };
             }
-            errors.push(`SambaNova (${model}): ${data?.error?.message || 'Failed'}`);
+            if (status === 429 || status === 403) setKeyCooldown(key);
+            errors.push(`SambaNova (${model}): ${data?.error?.message || 'Failed status ' + status}`);
           }
           return null;
         }
@@ -294,12 +317,13 @@ module.exports = async function handler(req, res) {
         run: async (key) => {
           for (const model of OPENROUTER_MODELS) {
             if (timeLeft() < 1500) return null;
-            const { ok, data } = await callOpenAIStyle('https://openrouter.ai/api/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens, { 'HTTP-Referer': 'https://vercel.com', 'X-Title': 'TalentTrack Smart ATS' });
+            const { ok, status, data } = await callOpenAIStyle('https://openrouter.ai/api/v1/chat/completions', model, key, system, prompt, Math.min(PER_ATTEMPT_TIMEOUT_MS, Math.max(timeLeft() - 500, 1000)), maxTokens, { 'HTTP-Referer': 'https://vercel.com', 'X-Title': 'TalentTrack Smart ATS' });
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
               if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `openrouter/${model}` };
             }
-            errors.push(`OpenRouter (${model}): ${data?.error?.message || 'Failed'}`);
+            if (status === 429 || status === 403) setKeyCooldown(key);
+            errors.push(`OpenRouter (${model}): ${data?.error?.message || 'Failed status ' + status}`);
           }
           return null;
         }
@@ -312,6 +336,10 @@ module.exports = async function handler(req, res) {
         continue;
       }
       for (const key of provider.keys) {
+        if (isKeyCoolingDown(key)) {
+          errors.push(`${provider.name}: key in cooldown, rotating to next key.`);
+          continue;
+        }
         if (timeLeft() < 1500) { errors.push(`${provider.name}: skipped due to execution time limit.`); break; }
         const result = await provider.run(key);
         if (result) {
@@ -322,7 +350,7 @@ module.exports = async function handler(req, res) {
     }
 
     res.status(502).json({
-      error: 'All configured AI providers failed, timed out, or reached rate limits.',
+      error: 'All configured AI providers and keys failed, timed out, or reached rate limits.',
       activeKeys,
       elapsedMs: Date.now() - startTime,
       details: errors,
