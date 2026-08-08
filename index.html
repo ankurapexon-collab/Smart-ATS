@@ -66,7 +66,7 @@
   .designer-tag{font-size:11px; font-weight:600; color:var(--text-muted-dark); text-align:center;}
   body.dark .designer-tag{color:var(--text-muted-light);}
 
-  /* Main Shell */
+  /* Main Shell - FIXED SCROLLING CONTAINER */
   .main{flex:1; min-width:0; display:flex; flex-direction:column; height:100vh; overflow-y:auto;}
   .topbar{
     display:flex; align-items:center; justify-content:space-between;
@@ -1582,7 +1582,6 @@ function renderFormatterView(){
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Formatting to Exact Calibri Layout...';
 
-    // SYSTEM PROMPT INCORPORATING THE 12 MASTER RULES FOR CV FORMATTING
     const systemPrompt = `You are a Strict Executive Resume Formatter. Convert the provided candidate resume into the EXACT standard corporate layout matching this template:
 
 # [CANDIDATE NAME]
