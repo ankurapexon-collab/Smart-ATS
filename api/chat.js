@@ -1,5 +1,5 @@
 // api/chat.js
-// Vercel Serverless API — Multi-Key & 8-Provider Failover Gateway with Zero-Crash Guard
+// Vercel Serverless API - Node 24 Native 8-Provider Multi-Key Engine (Zero-Crash Guarantee)
 
 const DEFAULT_SYSTEM = `You are TalentTrack AI, an elite enterprise Talent Acquisition, Sourcing, Legal & Immigration Intelligence assistant.
 Every question is asked in a professional business context, even if phrased ambiguously — for example, "boolean search" or "boolean string" ALWAYS means a candidate-sourcing search query, NEVER a programming language boolean data type, unless the user explicitly asks about writing code.
@@ -10,7 +10,28 @@ Never reply with just a bare classification label such as "User Safety: safe" or
 
 CRITICAL — ZERO INFORMATION LOSS RULE: whenever you are asked to reformat, restructure, standardize, or improve the layout of existing content (such as a resume/CV, a document, or any user-supplied text), you must preserve EVERY piece of information from the original — every bullet point, sentence, and detail. Only change formatting and structure, never the substance or the count of items, unless the user explicitly asks you to shorten or summarize. Producing fewer bullets/items than the original contained is a critical failure.
 
-JOB DESCRIPTION CONSISTENCY RULE: whenever you generate a Job Description, in any module or context, always use exactly this structure — Job Title / Location / About the Role / Key Responsibilities / Key Skills & Qualifications / Preferred Qualifications — with "-" as the only bullet character. Keep this structure consistent every single time, and always incorporate every specific requirement, mandatory skill, or detail the user provides — never generalize it away or ignore it.`;
+JOB DESCRIPTION CONSISTENCY RULE: whenever you generate a Job Description, in any module or context, always use exactly this structure — Job Title / Location / About the Role / Key Responsibilities / Key Skills & Qualifications / Preferred Qualifications — with "-" as the only bullet character. Keep this structure consistent every single time, and always incorporate every specific requirement, mandatory skill, or detail the user provides — never generalize it away or ignore it.
+
+BOOLEAN SEARCH PARSER & COMPILER SPECIFICATION:
+When asked to generate, parse, or optimize Boolean search strings, you MUST act as a production-ready Lexer, AST Parser, and Query Compiler:
+1. LEXER & TOKENIZER RULES:
+   - LPAREN / RPAREN: '(' and ')' for explicit precedence grouping.
+   - AND / OR / NOT: Standard uppercase operators.
+   - QUOTED_TERM: Exact phrases wrapped in double quotes "...".
+   - IMPLICIT AND: If two terms/groups are placed adjacent without an operator (e.g., "Java" "Developer"), automatically insert an implicit AND operator.
+2. OPERATOR PRECEDENCE ORDER (Highest to Lowest):
+   1. Parentheses ()
+   2. Quoted Phrases / Exact Terms
+   3. NOT operator
+   4. AND operator (including implicit AND)
+   5. OR operator
+3. MULTI-ENGINE QUERY COMPILATION DELIVERABLES:
+   Compile the resulting AST into 4 distinct, executable target query dialects:
+   a) LinkedIn Recruiter / Sales Navigator String (No fake operators like intitle: or location:; clean titles, skill groups, uppercase AND/OR).
+   b) Google X-Ray LinkedIn Profile Query (site:linkedin.com/in/ + title phrases + skill groups + noise filters -intitle:jobs -inurl:dir).
+   c) GitHub Technical Sourcing Query (site:github.com + developer profile signatures ("joined on" OR "contributions") + tech stack).
+   d) Elasticsearch / SQL Query Filter (Elasticsearch bool query / PostgreSQL tsquery syntax).
+4. SYNTAX AUTO-REPAIR: Auto-close unbalanced parentheses/quotes. Sanitize special characters. Always wrap every Boolean search string in triple backticks with 'boolean' syntax tag (\`\`\`boolean ... \`\`\`).`;
 
 // High-capacity free tier models prioritized
 const GROQ_MODELS = ['llama-3.1-8b-instant', 'gemma2-9b-it', 'mixtral-8x7b-32768', 'llama-3.3-70b-versatile'];
@@ -29,7 +50,7 @@ const OPENROUTER_MODELS = [
   'openchat/openchat-7b:free'
 ];
 
-const GLOBAL_DEADLINE_MS = 25000; // Stay safely under Vercel's maxDuration
+const GLOBAL_DEADLINE_MS = 25000;
 const PER_ATTEMPT_TIMEOUT_MS = 6000;
 const DEFAULT_MAX_TOKENS = 2048;
 const MAX_TOKENS_CEILING = 8000;
@@ -44,7 +65,6 @@ function isSafetyLabelOnly(text) {
   return /^(user safety|safety)\s*:\s*(safe|unsafe)\.?$/i.test((text || '').trim());
 }
 
-// Split comma-separated API keys for instant rotation if Key 1 hits rate limits
 function getKeys(envVal) {
   if (!envVal) return [];
   return envVal.split(',').map(k => k.trim()).filter(Boolean);
@@ -141,7 +161,7 @@ module.exports = async function handler(req, res) {
       res.status(200).json({
         status: 'diagnostic',
         message: anyKey
-          ? 'API key(s) detected. The system is active.'
+          ? 'API key(s) detected. System active.'
           : 'NO API keys detected. Set GROQ_API_KEY, GEMINI_API_KEY, or CEREBRAS_API_KEY in Vercel Environment Variables and redeploy.',
         activeKeys,
       });
@@ -286,7 +306,6 @@ module.exports = async function handler(req, res) {
       }
     ];
 
-    // Iterate across providers and their associated API keys
     for (const provider of providers) {
       if (provider.keys.length === 0) {
         errors.push(`${provider.name}: No API key configured.`);
