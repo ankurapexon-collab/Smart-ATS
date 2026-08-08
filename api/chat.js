@@ -1,5 +1,5 @@
 // api/chat.js
-// Vercel Serverless API — 8-Provider Multi-Key Rotation Engine with Zero-Crash Guard
+// Vercel Serverless API — 8-Provider Multi-Key Failover Engine (ES Module - Zero-500 Crash)
 
 const DEFAULT_SYSTEM = `You are TalentTrack AI, an elite enterprise Talent Acquisition, Sourcing, Legal & Immigration Intelligence assistant.
 Every question is asked in a professional business context, even if phrased ambiguously — for example, "boolean search" or "boolean string" ALWAYS means a candidate-sourcing search query, NEVER a programming language boolean data type, unless the user explicitly asks about writing code.
@@ -55,7 +55,7 @@ const PER_ATTEMPT_TIMEOUT_MS = 6000;
 const DEFAULT_MAX_TOKENS = 2048;
 const MAX_TOKENS_CEILING = 8000;
 
-// In-Memory Key Cooldown Manager (5-minute blacklist for 429 rate-limited keys)
+// In-Memory Key Cooldown Manager (5-minute blacklist for rate-limited keys)
 const keyCooldowns = new Map();
 
 function isKeyCoolingDown(key) {
@@ -82,7 +82,6 @@ function isSafetyLabelOnly(text) {
   return /^(user safety|safety)\s*:\s*(safe|unsafe)\.?$/i.test((text || '').trim());
 }
 
-// Support comma-separated API keys in environment variables
 function getKeys(envVal) {
   if (!envVal) return [];
   return envVal.split(',').map(k => k.trim()).filter(Boolean);
@@ -144,7 +143,8 @@ async function callOpenAIStyle(endpoint, modelName, apiKey, system, prompt, time
   );
 }
 
-module.exports = async function handler(req, res) {
+// ES MODULE DEFAULT EXPORT (Aligns with package.json "type": "module")
+export default async function handler(req, res) {
   const startTime = Date.now();
   const timeLeft = () => GLOBAL_DEADLINE_MS - (Date.now() - startTime);
 
@@ -350,7 +350,7 @@ module.exports = async function handler(req, res) {
     }
 
     res.status(502).json({
-      error: 'All configured AI providers and keys failed, timed out, or reached rate limits.',
+      error: 'All configured AI providers failed, timed out, or reached rate limits.',
       activeKeys,
       elapsedMs: Date.now() - startTime,
       details: errors,
@@ -359,4 +359,4 @@ module.exports = async function handler(req, res) {
   } catch (globalErr) {
     res.status(502).json({ error: 'Serverless execution error occurred.', details: globalErr.message });
   }
-};
+}
