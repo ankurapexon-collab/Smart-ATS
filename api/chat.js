@@ -1,5 +1,5 @@
 // api/chat.js
-// Vercel Serverless API — 8-Provider Multi-Key Failover Engine (ES Module - Zero-500 Crash)
+// Vercel Serverless API — 8-Provider Multi-Key Failover Gateway with Zero-Crash Guard
 
 const DEFAULT_SYSTEM = `You are TalentTrack AI, an elite enterprise Talent Acquisition, Sourcing, Legal & Immigration Intelligence assistant.
 Every question is asked in a professional business context, even if phrased ambiguously — for example, "boolean search" or "boolean string" ALWAYS means a candidate-sourcing search query, NEVER a programming language boolean data type, unless the user explicitly asks about writing code.
@@ -27,13 +27,13 @@ When asked to generate, parse, or optimize Boolean search strings, you MUST act 
    5. OR operator
 3. MULTI-ENGINE QUERY COMPILATION DELIVERABLES:
    Compile the resulting AST into 4 distinct, executable target query dialects:
-   a) LinkedIn Recruiter / Sales Navigator String (No fake operators like intitle: or location:; clean titles, skill groups, uppercase AND/OR).
+   a) LinkedIn Recruiter / Sales Navigator String (NEVER use fake operators like title: or intitle: or location: on LinkedIn! Use clean title synonyms in quotes separated by uppercase OR: ("Title 1" OR "Title 2") AND (Skill1 OR Skill2) AND (Location1 OR Location2)).
    b) Google X-Ray LinkedIn Profile Query (site:linkedin.com/in/ + title phrases + skill groups + noise filters -intitle:jobs -inurl:dir).
    c) GitHub Technical Sourcing Query (site:github.com + developer profile signatures ("joined on" OR "contributions") + tech stack).
    d) Elasticsearch / SQL Query Filter (Elasticsearch bool query / PostgreSQL tsquery syntax).
 4. SYNTAX AUTO-REPAIR: Auto-close unbalanced parentheses/quotes. Sanitize special characters. Always wrap every Boolean search string in triple backticks with 'boolean' syntax tag (\`\`\`boolean ... \`\`\`).`;
 
-// Provider Model Candidates
+// High-capacity free tier models prioritized
 const GROQ_MODELS = ['llama-3.1-8b-instant', 'gemma2-9b-it', 'mixtral-8x7b-32768', 'llama-3.3-70b-versatile'];
 const CEREBRAS_MODELS = ['llama3.1-8b', 'llama3.3-70b'];
 const GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-2.0-flash', 'gemini-1.5-pro'];
@@ -143,7 +143,6 @@ async function callOpenAIStyle(endpoint, modelName, apiKey, system, prompt, time
   );
 }
 
-// ES MODULE DEFAULT EXPORT (Aligns with package.json "type": "module")
 export default async function handler(req, res) {
   const startTime = Date.now();
   const timeLeft = () => GLOBAL_DEADLINE_MS - (Date.now() - startTime);
