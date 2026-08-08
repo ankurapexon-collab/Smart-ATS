@@ -580,7 +580,7 @@ function copyCodeText(btn) {
   });
 }
 
-/* Advanced Markdown Engine with Placeholders - FIXES RAW HTML LEAKAGE IN CODE BOXES */
+/* Advanced Markdown Engine with Placeholder Token Extraction - FIXES RAW HTML TAG LEAKAGE */
 function formatMarkdown(text) {
   if (!text) return '';
   
@@ -615,7 +615,7 @@ function formatMarkdown(text) {
     let trimmed = line.trim();
     const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
     
-    // Check if line is a code block placeholder
+    // Skip code-box containers from line-by-line paragraph wrapping
     if (trimmed.startsWith('___CODE_BLOCK_') && trimmed.endsWith('___')) {
       if (inUl) { out.push('</ul>'); inUl = false; }
       if (inOl) { out.push('</ol>'); inOl = false; }
@@ -651,7 +651,7 @@ function formatMarkdown(text) {
 
   let resultHtml = out.join('');
 
-  // 3. Re-inject styled HTML code boxes into placeholders
+  // 3. Re-inject styled HTML code boxes into placeholders AFTER escaping
   codeBlocks.forEach((codeText, idx) => {
     const codeEscaped = codeText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const codeBoxHtml = `<div class="code-box">
