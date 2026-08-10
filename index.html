@@ -768,6 +768,9 @@ function formatResumePaper(text) {
     let trimmed = line.trim();
     if (!trimmed) return;
 
+    // Strip any leading bullet markers (•, -, *, +) to accurately classify line types
+    let unbulleted = trimmed.replace(/^[*•+-]\s*/, '').trim();
+
     // 1. Candidate Name (Header)
     if (trimmed.startsWith('# ')) {
       closeUl();
@@ -777,7 +780,7 @@ function formatResumePaper(text) {
     }
 
     // 2. Main Section Headings (ALL CAPS, bold, strict executive format)
-    const upperStr = trimmed.replace(/[\*\#\:]/g, '').trim().toUpperCase();
+    const upperStr = unbulleted.replace(/[\*\#\:]/g, '').trim().toUpperCase();
     const isMainHeader = [
       'PROFESSIONAL SUMMARY',
       'TECHNICAL SKILLS',
@@ -790,9 +793,9 @@ function formatResumePaper(text) {
       'ADDITIONAL INFORMATION'
     ].some(h => upperStr === h || upperStr.startsWith(h));
 
-    if (isMainHeader && trimmed.length < 60 && !trimmed.startsWith('•') && !trimmed.startsWith('-') && !trimmed.startsWith('*')) {
+    if (isMainHeader && unbulleted.length < 60) {
       closeUl();
-      let headingText = trimmed.replace(/^[\#\*]+\s*/, '').replace(/\*/g, '').trim().toUpperCase();
+      let headingText = unbulleted.replace(/^[\#\*]+\s*/, '').replace(/\*/g, '').trim().toUpperCase();
       if (!headingText.endsWith(':') && (headingText.includes('SUMMARY') || headingText.includes('SKILLS') || headingText.includes('HISTORY'))) {
         headingText += ':';
       }
@@ -800,10 +803,10 @@ function formatResumePaper(text) {
       return;
     }
 
-    // 3. Organisation Line (Left aligned Organisation, Right aligned Dates)
-    if (trimmed.toLowerCase().startsWith('organisation:') || trimmed.toLowerCase().startsWith('organization:') || trimmed.toLowerCase().startsWith('company:')) {
+    // 3. Organisation Line (Left-aligned Organisation in Bold, Right-aligned Duration/Tenure in Bold)
+    if (unbulleted.toLowerCase().startsWith('organisation:') || unbulleted.toLowerCase().startsWith('organization:') || unbulleted.toLowerCase().startsWith('company:')) {
       closeUl();
-      let fullLine = trimmed.replace(/\*/g, '').trim();
+      let fullLine = unbulleted.replace(/\*/g, '').trim();
       let orgText = fullLine;
       let datePart = '';
 
@@ -820,31 +823,31 @@ function formatResumePaper(text) {
       }
 
       out.push(`<div class="resume-org-row">
-        <span class="resume-org-left">${esc(orgText)}</span>
-        <span class="resume-org-right">${esc(datePart)}</span>
+        <span class="resume-org-left"><strong>${esc(orgText)}</strong></span>
+        <span class="resume-org-right"><strong>${esc(datePart)}</strong></span>
       </div>`);
       return;
     }
 
-    // 4. Role Line (Role: Software Engineer)
-    if (trimmed.toLowerCase().startsWith('role:') || trimmed.toLowerCase().startsWith('job title:')) {
+    // 4. Role Line (Role: Software Engineer) - Bold
+    if (unbulleted.toLowerCase().startsWith('role:') || unbulleted.toLowerCase().startsWith('job title:')) {
       closeUl();
-      let roleText = trimmed.replace(/\*/g, '').trim();
+      let roleText = unbulleted.replace(/\*/g, '').trim();
       out.push(`<div class="resume-role-line"><strong>${esc(roleText)}</strong></div>`);
       return;
     }
 
     // 5. Technologies Line (Technologies: ...)
-    if (trimmed.toLowerCase().startsWith('technologies:')) {
+    if (unbulleted.toLowerCase().startsWith('technologies:')) {
       closeUl();
-      let techContent = trimmed.replace(/^technologies:\s*/i, '').replace(/\*/g, '').trim();
+      let techContent = unbulleted.replace(/^technologies:\s*/i, '').replace(/\*/g, '').trim();
       out.push(`<div class="resume-tech-line"><strong>Technologies:</strong> ${esc(techContent)}</div>`);
       return;
     }
 
     // 6. Subheadings within positions (e.g. Responsibilities, Key Achievements, Regulatory Engineering)
-    const subheadMatch = trimmed.match(/^(\*\*|\#\#\#?\s*)?([A-Za-z0-9\s\&]+)(\*\*|\:)?$/);
-    if (subheadMatch && !trimmed.startsWith('•') && !trimmed.startsWith('-') && !trimmed.startsWith('*') && trimmed.length < 40) {
+    const subheadMatch = unbulleted.match(/^(\*\*|\#\#\#?\s*)?([A-Za-z0-9\s\&]+)(\*\*|\:)?$/);
+    if (subheadMatch && !trimmed.startsWith('•') && !trimmed.startsWith('-') && !trimmed.startsWith('*') && unbulleted.length < 40) {
       const subTitle = subheadMatch[2].trim();
       if (['Responsibilities', 'Key Achievements', 'Regulatory Engineering', 'Projects', 'Achievements', 'Key Responsibilities'].some(s => s.toLowerCase() === subTitle.toLowerCase())) {
         closeUl();
@@ -1742,15 +1745,20 @@ STRICT COMPLIANCE RULES:
      - **Monitoring:** tool1, tool2
      - **Testing:** tool1, tool2
 
-5. EMPLOYMENT HISTORY STRUCTURE:
+5. EMPLOYMENT HISTORY STRUCTURE (STRICT):
    - For every position, strictly format as:
-     Organisation: [Company Name, Location] | [Dates, e.g. Feb 2022 – Present]
-     Role: [Exact Job Title]
+     Organisation: [Organisation Name], [Location], [Country] | [Duration/Tenure, e.g. Feb 2022 – Present]
+     Role: [Designation]
      Responsibilities
-     - [Bullet point]
-     - [Bullet point]
+     - [Bullet point 1]
+     - [Bullet point 2]
      (Include subheadings like **Key Achievements** or **Regulatory Engineering** if present in original)
      Technologies: [List of technologies used in this role, if provided in original]
+
+   CRITICAL RULE FOR EMPLOYMENT HISTORY:
+   - NEVER put a bullet point (•, -, *) before "Organisation:" or "Role:".
+   - "Organisation:" must appear at the start of its line.
+   - "Role:" must appear on its own line directly beneath.
 
 6. USER INSTRUCTIONS PRECEDENCE:
    - If the user provides custom instructions below, follow them precisely alongside these master rules.`;
