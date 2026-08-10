@@ -156,7 +156,7 @@
   .ai-badge{display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--purple); background:var(--purple-soft); padding:3px 9px; border-radius:20px; margin-left:8px; vertical-align:middle;}
   body.dark .ai-badge{background:rgba(139,92,246,0.22);}
 
-  /* Markdown Formatted Output Engine */
+  /* Formatted Output Engine */
   .formatted-output{
     background:var(--paper); border:1px solid var(--border-light); border-radius:12px;
     padding:22px; margin-top:16px; font-size:14px; line-height:1.7; color:var(--text-dark);
@@ -176,7 +176,7 @@
   .formatted-output li{margin-bottom:6px;}
   .formatted-output p{margin:0 0 12px 0;}
 
-  /* ELEGANT BOOLEAN CODE BLOCK CONTAINERS WITH COPY BUTTONS */
+  /* Code Blocks */
   .code-box {
     background:#0F172A; color:#E2E8F0; border-radius:10px; border:1px solid #334155; margin:14px 0; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.2);
   }
@@ -287,7 +287,7 @@
   .modal h2{font-family:var(--font-display); font-size:19px; margin:0 0 20px 0;}
   .modal-actions{display:flex; gap:12px; justify-content:flex-end; margin-top:22px;}
 
-  /* Multi-Chat Assistant Layout */
+  /* Chat Layout */
   .chat-layout{display:grid; grid-template-columns:280px 1fr; gap:18px; height:calc(100vh - 220px); min-height:480px; overflow:hidden;}
   .chat-layout > *{min-width:0; min-height:0;}
   @media(max-width:800px){.chat-layout{grid-template-columns:1fr; height:auto;}}
@@ -317,7 +317,7 @@
   .chat-input-row{display:flex; gap:12px; margin-top:12px; flex-shrink:0;}
   .chat-input-row input{flex:1; min-width:0;}
 
-  /* Jobs UI Redesign */
+  /* Jobs UI */
   .job-card{background:var(--panel-light); border:1px solid var(--border-light); border-radius:var(--radius); padding:18px; cursor:pointer; transition:all .18s;}
   body.dark .job-card{background:var(--panel-dark); border-color:var(--border-dark);}
   .job-card.active{border-color:var(--indigo); box-shadow:0 0 0 2px var(--indigo-glow);}
@@ -327,7 +327,7 @@
   .job-status-pill{display:inline-block; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:4px 10px; border-radius:20px; margin-top:10px;}
   .job-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px; margin-bottom:22px;}
 
-  /* Structured JD View Container */
+  /* Structured JD Container */
   .jd-structured-container{
     background:var(--paper); border:1px solid var(--border-light); border-radius:12px; padding:24px; margin-bottom:20px; line-height:1.7; font-size:14px;
   }
@@ -335,21 +335,95 @@
   .jd-structured-container h3{color:var(--indigo); font-family:var(--font-display); font-size:16px; margin:18px 0 8px 0; border-bottom:1px solid var(--border-light); padding-bottom:6px;}
   body.dark .jd-structured-container h3{color:#A5B4FC; border-color:var(--border-dark);}
 
-  /* EXACT CALIBRI EXECUTIVE RESUME PAPER TEMPLATE WITH CLEAN FLEX ROW LAYOUT (NO RAW HTML TAG LEAKAGE) */
+  /* MASTER CALIBRI CV REFERENCE TEMPLATE (SALEEM SHAIK & FATIH ÖZMEN LAYOUT) */
   .resume-paper{
-    background:white; color:#000000; border:1px solid #CBD5E1; border-radius:8px; padding:40px 48px; box-shadow:0 10px 30px rgba(0,0,0,0.08); font-family:'Calibri', 'Segoe UI', Arial, sans-serif; font-size:14px; line-height:1.5; margin-top:20px;
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    padding: 45px 55px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.45;
+    margin-top: 20px;
   }
-  .resume-paper h1{font-family:'Calibri', 'Segoe UI', Arial, sans-serif; font-size:16px; font-weight:700; text-align:center; margin:0 0 16px 0; color:#000000; text-transform:uppercase; letter-spacing:0.02em;}
-  .resume-paper h2, .resume-paper h3{font-family:'Calibri', 'Segoe UI', Arial, sans-serif; font-size:14px; font-weight:700; color:#000000; margin:20px 0 8px 0; text-transform:uppercase; border:none; padding:0;}
-  .resume-paper ul{margin:6px 0 14px 22px; padding:0; list-style-type:disc;}
-  .resume-paper li{margin-bottom:6px; color:#000000;}
-  .resume-paper p{margin:0 0 8px 0; color:#000000;}
-  .resume-paper strong{color:#000000; font-weight:700;}
+  .resume-candidate-name {
+    text-align: center;
+    font-size: 16pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    color: #000000;
+    letter-spacing: 0.02em;
+  }
+  .resume-section-header {
+    font-size: 11pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin: 22px 0 8px 0;
+    color: #000000;
+    border-bottom: none;
+    letter-spacing: 0.01em;
+  }
+  .resume-org-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11pt;
+    margin-top: 14px;
+    margin-bottom: 2px;
+    color: #000000;
+    width: 100%;
+  }
+  .resume-org-left {
+    font-weight: 700;
+    text-align: left;
+  }
+  .resume-org-right {
+    font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
+    margin-left: 16px;
+  }
+  .resume-role-line {
+    font-size: 11pt;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #000000;
+  }
+  .resume-sub-header {
+    font-size: 11pt;
+    font-weight: 700;
+    margin: 10px 0 4px 0;
+    color: #000000;
+  }
+  .resume-bullet-list {
+    margin: 4px 0 10px 22px;
+    padding: 0;
+    list-style-type: disc;
+    color: #000000;
+  }
+  .resume-bullet-list li {
+    margin-bottom: 4px;
+    color: #000000;
+    line-height: 1.4;
+  }
+  .resume-tech-line {
+    font-size: 11pt;
+    margin: 8px 0 12px 0;
+    color: #000000;
+  }
+  .resume-paragraph {
+    margin: 0 0 6px 0;
+    color: #000000;
+  }
 
-  /* PRINT CSS STYLES FOR NATIVE SELECTABLE VECTOR TEXT PDF - REMOVES URL, TIME & DATE HEADERS/FOOTERS */
+  /* PRINT CSS FOR 100% VECTOR SELECTABLE / SEARCHABLE PDF EXPORT */
   @media print {
     @page {
-      margin: 0; /* Suppresses browser headers (Date/Title) and footers (URL) */
+      size: A4 portrait;
+      margin: 15mm 18mm 15mm 18mm;
     }
     body {
       background: white !important;
@@ -357,9 +431,11 @@
       height: auto !important;
       overflow: visible !important;
       margin: 0 !important;
-      padding: 15mm !important; /* Clean paper margins for printed CV */
+      padding: 0 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
-    .sidebar, .topbar, .app-footer, .card > div:not(#fmtResultArea), .btn-primary, .btn-ghost, .dropzone, .field, .section-title, .section-sub, .toast {
+    .sidebar, .topbar, .app-footer, .card > div:not(#fmtResultArea), .card > button, .card > p, .card > .field, .btn-primary, .btn-ghost, .dropzone, .field, .section-title, .section-sub, .toast, .bulk-bar {
       display: none !important;
     }
     .app, .main, .shell, .card {
@@ -369,9 +445,12 @@
       box-shadow: none !important;
       padding: 0 !important;
       margin: 0 !important;
+      background: transparent !important;
     }
     #fmtResultArea {
       display: block !important;
+      margin: 0 !important;
+      padding: 0 !important;
     }
     .resume-paper {
       border: none !important;
@@ -380,12 +459,13 @@
       margin: 0 !important;
       width: 100% !important;
       font-family: 'Calibri', 'Segoe UI', Arial, sans-serif !important;
+      color: #000000 !important;
+      background: #ffffff !important;
+    }
+    .resume-candidate-name, .resume-section-header, .resume-org-row, .resume-role-line, .resume-sub-header, .resume-bullet-list li, .resume-tech-line, .resume-paragraph {
+      color: #000000 !important;
     }
   }
-
-  /* Copy Button Bar */
-  .copy-bar{display:flex; justify-content:space-between; align-items:center; background:var(--indigo-soft); padding:8px 14px; border-radius:8px; margin-bottom:8px;}
-  body.dark .copy-bar{background:rgba(91,108,255,0.16);}
 
   /* Analytics */
   .stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px;}
@@ -581,20 +661,18 @@ function copyCodeText(btn) {
   });
 }
 
-/* Advanced Markdown Engine with Placeholder Token Extraction - FIXES RAW HTML TAG LEAKAGE */
+/* Markdown Helper */
 function formatMarkdown(text) {
   if (!text) return '';
   
   const codeBlocks = [];
 
-  // 1. Extract triple-backtick code blocks and replace with placeholders first
   let html = text.replace(/```(?:[a-zA-Z0-9]+)?\n([\s\S]*?)```/g, (match, code) => {
     const idx = codeBlocks.length;
     codeBlocks.push(code.trim());
     return `___CODE_BLOCK_${idx}___`;
   });
 
-  // 2. Escape raw HTML characters safely
   html = html
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -616,7 +694,6 @@ function formatMarkdown(text) {
     let trimmed = line.trim();
     const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
     
-    // Skip code-box containers from line-by-line paragraph wrapping
     if (trimmed.startsWith('___CODE_BLOCK_') && trimmed.endsWith('___')) {
       if (inUl) { out.push('</ul>'); inUl = false; }
       if (inOl) { out.push('</ol>'); inOl = false; }
@@ -652,7 +729,6 @@ function formatMarkdown(text) {
 
   let resultHtml = out.join('');
 
-  // 3. Re-inject styled HTML code boxes into placeholders AFTER escaping
   codeBlocks.forEach((codeText, idx) => {
     const codeEscaped = codeText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const codeBoxHtml = `<div class="code-box">
@@ -668,7 +744,9 @@ function formatMarkdown(text) {
   return resultHtml;
 }
 
-/* CUSTOM RESUME FORMATTER PARSER - CLEANS ALL RAW HTML TAGS & ENSURES ORGANISATION LEFT + DATES RIGHT ALIGNED */
+/* MASTER CALIBRI RESUME PARSER & FORMATTER (SALEEM SHAIK & FATIH ÖZMEN REFERENCE COMPLIANCE) */
+function esc(str){ const d=document.createElement('div'); d.textContent=str==null?'':str; return d.innerHTML; }
+
 function formatResumePaper(text) {
   if (!text) return '';
 
@@ -682,40 +760,49 @@ function formatResumePaper(text) {
   let out = [];
   let inUl = false;
 
+  const closeUl = () => {
+    if (inUl) { out.push('</ul>'); inUl = false; }
+  };
+
   lines.forEach((line) => {
     let trimmed = line.trim();
     if (!trimmed) return;
 
     // 1. Candidate Name (Header)
     if (trimmed.startsWith('# ')) {
-      if (inUl) { out.push('</ul>'); inUl = false; }
+      closeUl();
       const name = trimmed.replace('# ', '').replace(/\*/g, '').trim();
-      out.push(`<div style="text-align:center; font-size:16px; font-weight:700; text-transform:uppercase; margin-bottom:18px; color:#000;">${name}</div>`);
+      out.push(`<div class="resume-candidate-name">${esc(name)}</div>`);
       return;
     }
 
-    // 2. Main Section Headings
-    const mainHeadMatch = trimmed.match(/^(\*\*|\#\#\s*)?([A-Z\s\/&:\,]+)(\*\*|\:)?$/);
-    if (mainHeadMatch && trimmed.length < 50 && !trimmed.includes(': ') && !trimmed.startsWith('•') && !trimmed.startsWith('-')) {
-      if (inUl) { out.push('</ul>'); inUl = false; }
-      const title = trimmed.replace(/[\*\#]/g, '').trim().toUpperCase();
-      out.push(`<div style="font-size:14px; font-weight:700; text-transform:uppercase; margin:22px 0 8px 0; color:#000;">${title}</div>`);
+    // 2. Main Section Headings (ALL CAPS, bold, strict executive format)
+    const upperStr = trimmed.replace(/[\*\#\:]/g, '').trim().toUpperCase();
+    const isMainHeader = [
+      'PROFESSIONAL SUMMARY',
+      'TECHNICAL SKILLS',
+      'EMPLOYMENT HISTORY',
+      'EDUCATION AND CERTIFICATIONS',
+      'EDUCATION & CERTIFICATIONS',
+      'EDUCATION',
+      'CERTIFICATIONS',
+      'LANGUAGES',
+      'ADDITIONAL INFORMATION'
+    ].some(h => upperStr === h || upperStr.startsWith(h));
+
+    if (isMainHeader && trimmed.length < 60 && !trimmed.startsWith('•') && !trimmed.startsWith('-') && !trimmed.startsWith('*')) {
+      closeUl();
+      let headingText = trimmed.replace(/^[\#\*]+\s*/, '').replace(/\*/g, '').trim().toUpperCase();
+      if (!headingText.endsWith(':') && (headingText.includes('SUMMARY') || headingText.includes('SKILLS') || headingText.includes('HISTORY'))) {
+        headingText += ':';
+      }
+      out.push(`<div class="resume-section-header">${esc(headingText)}</div>`);
       return;
     }
 
-    // 3. Subheadings (Responsibilities, Key Achievements)
-    const subheadMatch = trimmed.match(/^(\*\*|\#\#\#\s*)?(Responsibilities|Key Achievements|Key Responsibilities|Projects)(\*\*|\:)?$/i);
-    if (subheadMatch) {
-      if (inUl) { out.push('</ul>'); inUl = false; }
-      const subTitle = subheadMatch[2];
-      out.push(`<div style="font-size:13.5px; font-weight:700; margin:10px 0 6px 0; color:#000;">${subTitle}</div>`);
-      return;
-    }
-
-    // 4. Organisation Line (Organisation: Company Name, Location [LEFT] and Dates [RIGHT])
-    if (trimmed.toLowerCase().startsWith('organisation:') || trimmed.toLowerCase().startsWith('organization:')) {
-      if (inUl) { out.push('</ul>'); inUl = false; }
-      
+    // 3. Organisation Line (Left aligned Organisation, Right aligned Dates)
+    if (trimmed.toLowerCase().startsWith('organisation:') || trimmed.toLowerCase().startsWith('organization:') || trimmed.toLowerCase().startsWith('company:')) {
+      closeUl();
       let fullLine = trimmed.replace(/\*/g, '').trim();
       let orgText = fullLine;
       let datePart = '';
@@ -723,58 +810,82 @@ function formatResumePaper(text) {
       if (fullLine.includes('|')) {
         const parts = fullLine.split('|');
         orgText = parts[0].trim();
-        datePart = parts[1].trim();
+        datePart = parts.slice(1).join('|').trim();
       } else {
         const dateMatch = orgText.match(/(?:Jan|Feb|Mar|Apr|May|Jun|July|June|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})\s*[\d\s–—\-Present]*$/i);
-        if (dateMatch && dateMatch.index > 10) {
+        if (dateMatch && dateMatch.index > 8) {
           datePart = orgText.substring(dateMatch.index).trim();
           orgText = orgText.substring(0, dateMatch.index).trim();
         }
       }
 
-      out.push(`<div style="display:flex; justify-content:space-between; align-items:baseline; font-size:13.5px; margin-top:14px; color:#000; width:100%;">
-        <span style="text-align:left;"><strong>${orgText}</strong></span>
-        <span style="text-align:right; font-weight:700; white-space:nowrap; margin-left:12px;">${datePart}</span>
+      out.push(`<div class="resume-org-row">
+        <span class="resume-org-left">${esc(orgText)}</span>
+        <span class="resume-org-right">${esc(datePart)}</span>
       </div>`);
       return;
     }
 
-    // 5. Role Line (Role: Job Title)
-    if (trimmed.toLowerCase().startsWith('role:')) {
-      if (inUl) { out.push('</ul>'); inUl = false; }
-      const roleText = trimmed.replace(/\*/g, '').trim();
-      out.push(`<div style="font-size:13.5px; margin-bottom:8px; color:#000;"><strong>${roleText}</strong></div>`);
+    // 4. Role Line (Role: Software Engineer)
+    if (trimmed.toLowerCase().startsWith('role:') || trimmed.toLowerCase().startsWith('job title:')) {
+      closeUl();
+      let roleText = trimmed.replace(/\*/g, '').trim();
+      out.push(`<div class="resume-role-line"><strong>${esc(roleText)}</strong></div>`);
       return;
     }
 
-    // 6. Technologies Line (Technologies: ...)
+    // 5. Technologies Line (Technologies: ...)
     if (trimmed.toLowerCase().startsWith('technologies:')) {
-      if (inUl) { out.push('</ul>'); inUl = false; }
-      const techText = trimmed.replace(/^technologies:\s*/i, '').replace(/\*/g, '').trim();
-      out.push(`<div style="font-size:13px; margin:8px 0 14px 0; color:#000;"><strong>Technologies:</strong> ${techText}</div>`);
+      closeUl();
+      let techContent = trimmed.replace(/^technologies:\s*/i, '').replace(/\*/g, '').trim();
+      out.push(`<div class="resume-tech-line"><strong>Technologies:</strong> ${esc(techContent)}</div>`);
       return;
     }
 
-    // 7. Bullet Points
-    if (trimmed.startsWith('•') || trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
-      if (!inUl) { out.push('<ul style="margin:4px 0 10px 22px; padding:0; list-style-type:disc; color:#000;">'); inUl = true; }
-      let bulletContent = trimmed.replace(/^[*•-]\s*/, '').trim();
+    // 6. Subheadings within positions (e.g. Responsibilities, Key Achievements, Regulatory Engineering)
+    const subheadMatch = trimmed.match(/^(\*\*|\#\#\#?\s*)?([A-Za-z0-9\s\&]+)(\*\*|\:)?$/);
+    if (subheadMatch && !trimmed.startsWith('•') && !trimmed.startsWith('-') && !trimmed.startsWith('*') && trimmed.length < 40) {
+      const subTitle = subheadMatch[2].trim();
+      if (['Responsibilities', 'Key Achievements', 'Regulatory Engineering', 'Projects', 'Achievements', 'Key Responsibilities'].some(s => s.toLowerCase() === subTitle.toLowerCase())) {
+        closeUl();
+        out.push(`<div class="resume-sub-header"><strong>${esc(subTitle)}</strong></div>`);
+        return;
+      }
+    }
+
+    // 7. Bullet Points (Standard Executive Bullet)
+    if (trimmed.startsWith('•') || trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('+ ')) {
+      if (!inUl) {
+        out.push('<ul class="resume-bullet-list">');
+        inUl = true;
+      }
+      let bulletContent = trimmed.replace(/^[*•+-]\s*/, '').trim();
+      
       bulletContent = bulletContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      out.push(`<li style="margin-bottom:4px; color:#000;">${bulletContent}</li>`);
+      if (!bulletContent.includes('<strong>')) {
+        const catMatch = bulletContent.match(/^([A-Za-z0-9\s\&\/]+:)\s*(.*)/);
+        if (catMatch && catMatch[1].length < 32) {
+          bulletContent = `<strong>${esc(catMatch[1])}</strong> ${esc(catMatch[2])}`;
+        } else {
+          bulletContent = esc(bulletContent);
+        }
+      }
+      
+      out.push(`<li>${bulletContent}</li>`);
       return;
     }
 
     // 8. Default Paragraph
-    if (inUl) { out.push('</ul>'); inUl = false; }
-    let paraContent = trimmed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    out.push(`<p style="margin:0 0 6px 0; color:#000;">${paraContent}</p>`);
+    closeUl();
+    let paraContent = esc(trimmed).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    out.push(`<p class="resume-paragraph">${paraContent}</p>`);
   });
 
-  if (inUl) out.push('</ul>');
+  closeUl();
   return out.join('');
 }
 
-/* LocalStorage Keys */
+/* LocalStorage Keys & Data */
 const STAGES = [
   { key:'applied',   label:'Applied',   color:'#5B6CFF', bg:'#EEF0FF' },
   { key:'screening', label:'Screening', color:'#8B5CF6', bg:'#F3E8FF' },
@@ -789,8 +900,8 @@ function jid(){ return 'J-' + Math.random().toString(36).slice(2,7).toUpperCase(
 
 function seedData(){
   return [
-    {id:cid(),fullName:'Ravisankar Vemireddy',roleApplied:'Data Engineer/Architect/Analyst',email:'ravisankar.v@email.com',phone:'+44 7700 900123',stage:'interview',skills:['Azure Cloud','Databricks','Fabric','Snowflake','PySpark','SQL Optimization'],notes:'Lloyds of London Insurance UK candidate.',resumeText:'RAVISANKAR VEMIREDDY\nData Engineer/Architect\nAzure, Databricks, Fabric, Snowflake'},
     {id:cid(),fullName:'Saleem Shaik',roleApplied:'Senior Software Engineer',email:'saleem.shaik@email.com',phone:'+44 7448 895560',stage:'interview',skills:['Java 17','Spring Boot','GCP','Docker','Kubernetes','REST APIs'],notes:'Skilled Worker Visa (UK) – eligible for sponsorship transfer.',resumeText:'Saleem Shaik\nSenior Software Engineer\nJava 17, Spring Boot, GCP, Kubernetes'},
+    {id:cid(),fullName:'Fatih Özmen',roleApplied:'Senior Software Engineer',email:'fatih.ozmen@email.com',phone:'+44 7700 900456',stage:'interview',skills:['Java','Spring Boot','Kafka','Apache Flink','Kubernetes'],notes:'Low-latency financial engineering specialist.',resumeText:'Fatih Özmen\nSenior Software Engineer\nJava, Spring Boot, Kafka, Apache Flink'},
     {id:cid(),fullName:'Priya Sharma',roleApplied:'Data Engineer with Azure Experience',email:'priya.sharma@email.com',phone:'+91 98765 43210',stage:'interview',skills:['Azure','Databricks','Power BI','ETL','PySpark'],notes:'Strong hands-on experience in Azure Data Factory.',resumeText:'Priya Sharma\nData Engineer with Azure Experience\nSkills: Azure, Databricks, Data Factory, Power BI, PySpark'},
   ];
 }
@@ -843,7 +954,6 @@ function logActivity(text){
 }
 
 function stageInfo(k){ return STAGES.find(s=>s.key===k) || STAGES[0]; }
-function esc(str){ const d=document.createElement('div'); d.textContent=str==null?'':str; return d.innerHTML; }
 
 /* Call Backend API */
 async function callClaude(systemPrompt, userPrompt, maxTokens){
@@ -971,7 +1081,7 @@ const VIEW_META = {
   crm:{title:'Candidate Pipeline', sub:'Recruitment CRM Dashboard with bulk operations & activity log.'},
   jobs:{title:'Job Requisitions & JDs', sub:'Structured Job Descriptions and AI Match Candidate Suggestions.'},
   batch:{title:'Multi-Resume Batch Upload', sub:'Bulk upload resumes to extract candidate profiles.'},
-  formatter:{title:'Exact Calibri Resume Formatter', sub:'Reformats any CV into the exact standard layout (No contact details, Calibri font, right-aligned dates) with native text PDF & Word export.'},
+  formatter:{title:'Exact Executive Resume Formatter', sub:'Reformats any CV into the exact standard master reference format (No contact details, Calibri font, right-aligned dates) with native text PDF & Word export.'},
   search:{title:'Candidate Search', sub:'Filter your candidate database.'},
   matcher:{title:'Resume Matcher', sub:'Bulk resume matching against JDs & Word Report Export.'},
   jd:{title:'Job Description Generator', sub:'Generate JDs in exact standardized format.'},
@@ -1019,9 +1129,7 @@ function renderShell(){
   if(renderers[currentView]) renderers[currentView]();
 }
 
-/* =========================================================
-   1. CRM DASHBOARD
-========================================================= */
+/* CRM DASHBOARD */
 let crmStageFilter='all', crmSearch='', selectedCandIds = new Set();
 
 function renderCrmView(){
@@ -1275,9 +1383,7 @@ function openCandidateDetailsModal(id){
   document.getElementById('candDetailsModalOverlay').classList.add('open');
 }
 
-/* =========================================================
-   2. JOB OPENINGS & AI SUGGESTIONS
-========================================================= */
+/* JOB OPENINGS */
 let activeJobId = null;
 
 function renderJobsView(){
@@ -1478,9 +1584,7 @@ document.getElementById('jobForm').onsubmit=(e)=>{
   showToast('Job requisition saved!');
 };
 
-/* =========================================================
-   3. BATCH RESUME UPLOAD
-========================================================= */
+/* BATCH RESUME UPLOAD */
 function renderBatchView(){
   const shell=document.getElementById('shell');
   shell.innerHTML=`
@@ -1526,7 +1630,7 @@ async function processBatchFiles(files){
         phone: parsed.phone || '',
         skills: detectedSkills,
         stage: 'applied',
-        notes: parseFailed ? `Imported via Batch Upload (${file.name}) — AI could not auto-extract fields, please review and fill in manually.` : `Imported via Batch Upload (${file.name})`,
+        notes: parseFailed ? `Imported via Batch Upload (${file.name}) — AI could not auto-extract fields, please review manually.` : `Imported via Batch Upload (${file.name})`,
         resumeText: text,
       };
       candidates.push(newCand);
@@ -1545,17 +1649,15 @@ async function processBatchFiles(files){
   showToast('Batch candidate upload complete!');
 }
 
-/* =========================================================
-   4. EXACT CALIBRI CV RESUME FORMATTER & NATIVE TEXT PDF EXPORTER
-========================================================= */
+/* MASTER EXACT CALIBRI CV RESUME FORMATTER & PDF EXPORTER */
 let rawResumeInputText = '';
 
 function renderFormatterView(){
   const shell = document.getElementById('shell');
   shell.innerHTML = `
     <div class="card">
-      <p class="section-title">✨ Exact Calibri Resume Formatter & PDF Exporter</p>
-      <p class="section-sub">Parses any CV (.pdf, .docx, .txt) and reformats it into the EXACT standard corporate layout: Calibri 12pt centered name, no contact details, right-aligned dates, uppercase bold section headings, and clean bullet points.</p>
+      <p class="section-title">✨ Master Executive Resume Formatter & PDF Exporter</p>
+      <p class="section-sub">Parses any CV (.pdf, .docx, .txt) and reformats it into the EXACT master executive reference format (Saleem Shaik & Fatih Özmen layout): Calibri font, centered candidate name, NO contact information, right-aligned dates, bold headers, and 100% vector text PDF export.</p>
 
       <div class="field">
         <label>Upload Candidate Resume File (.pdf, .docx, .txt)</label>
@@ -1568,6 +1670,11 @@ function renderFormatterView(){
       <div class="field">
         <label>Or Paste Raw Resume Content</label>
         <textarea id="fmtRawText" style="min-height:160px;" placeholder="Paste raw resume text here..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Custom Formatting Instructions (Optional)</label>
+        <input type="text" id="fmtCustomInstructions" placeholder="e.g. Standardize job titles to Senior Software Engineer, emphasize GCP cloud experience, etc.">
       </div>
 
       <div style="display:flex; gap:10px;">
@@ -1594,32 +1701,64 @@ function renderFormatterView(){
 
   document.getElementById('fmtRunBtn').onclick = async ()=>{
     const rawText = document.getElementById('fmtRawText').value.trim();
+    const customInstructions = document.getElementById('fmtCustomInstructions').value.trim();
     if(!rawText){ showToast('Please upload or paste a resume', true); return; }
 
     const btn = document.getElementById('fmtRunBtn');
     const origText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Formatting to Exact Calibri Layout...';
+    btn.innerHTML = '<span class="spinner"></span> Formatting to Master Executive Layout...';
 
-    const systemPrompt = `You are a Professional CV/Resume Formatting Specialist. Carefully scan and analyze the entire CV before making any changes. Use your intelligence to understand the candidate's profile, profession, seniority, and the existing document structure. Your task is to improve ONLY the presentation and formatting while preserving the authenticity and completeness of the original CV.
+    const systemPrompt = `You are a Master Executive CV/Resume Formatting Specialist.
+Your job is to reformat any given CV/resume into the EXACT master executive reference format used in top UK and global engineering organizations (reference standard: Saleem Shaik & Fatih Özmen).
 
-OUTPUT FORMAT: Start with "# [CANDIDATE NAME]" as a Markdown heading. Then reproduce every section that exists in the original CV, in its original order (unless clearly inconsistent — see rule 1), using clean Markdown: "##" for section headings, "-" as the only bullet character, and "|" to separate items like dates from locations (e.g. "Company Name, Country | Feb 2022 – Present"). Do not use "*", "+", "•", or literal HTML tags anywhere.
+STRICT COMPLIANCE RULES:
+1. CANDIDATE NAME ONLY AT TOP:
+   - Output "# [CANDIDATE NAME]" in bold uppercase at the top.
+   - DO NOT include phone number, email address, physical location, or LinkedIn link anywhere in the header or output.
 
-MASTER RULES FOR CV FORMATTING (STRICT COMPLIANCE):
-1. PRESERVE ORIGINAL STRUCTURE: Do not add, remove, rename, or reorder sections unless the original document is clearly inconsistent or duplicated. There is no fixed template to force content into — the section list is whatever the original CV actually contains.
-2. OPTIONAL SECTIONS RULE: Only include a section if it already exists in the original CV — this applies to Professional Summary, Profile, Core Competencies, Key Skills, Technical Skills, Projects, Certifications, Achievements, Awards, Publications, Languages, Interests, References, Training, Volunteer Experience, and any other section type. Never invent a section that isn't already there, and never drop one that is.
-3. ZERO CONTENT GENERATION: Never generate, assume, or invent content, skills, experience, achievements, certifications, projects, responsibilities, dates, employers, qualifications, or keywords not present in the original CV.
-4. ZERO INFORMATION LOSS: Every bullet point, responsibility, achievement, and sentence in the original must appear in your output — however many there are. If the original has 15 bullets under a section, your output must also have 15 bullets there. Only reformat and clean up presentation; never shorten, condense, merge, paraphrase away, or omit content. This is the single most important rule.
-5. CORRECTIONS & ATS LAYOUT: Correct grammar, spelling, punctuation, alignment, spacing, bullet formatting, and consistency while keeping the original meaning unchanged.
-6. CONSOLIDATION: If information is duplicated, consolidate it without changing meaning or removing important details.
-7. MISPLACED INFO: If information appears under the wrong heading, intelligently move it to the most appropriate EXISTING section — never create a new section to hold it.
-8. DATES & NAMES: Keep all dates, company names, job titles, education, certifications, and employment history exactly as provided, unless there is an obvious formatting error.
-9. NO EXAGGERATION: Do not exaggerate, rewrite, optimize for a specific job, or add industry keywords. This is formatting only, not CV enhancement.
-10. NO CONTACT INFO: Do not include phone numbers, emails, addresses, or LinkedIn URLs — this is a deliberate recruiter-workflow choice to prevent direct candidate contact bypassing the agency, not a formatting error to fix.
-11. VERIFY BEFORE OUTPUT: Before producing the final CV, mentally verify that every section in your output existed in the original, no new sections were introduced, and every original bullet is still present.`;
+2. SECTION HEADINGS (UPPERCASE BOLD):
+   - Use the following section titles strictly in uppercase:
+     PROFESSIONAL SUMMARY:
+     TECHNICAL SKILLS:
+     EMPLOYMENT HISTORY
+     EDUCATION AND CERTIFICATIONS
+     LANGUAGES (Only if present in original)
+   - Do NOT invent sections that do not exist in the original CV.
+
+3. ZERO INFORMATION LOSS & ZERO FABRICATION:
+   - Convert all summary points and job responsibilities into clean bullet points starting with "- ".
+   - Retain EVERY single responsibility, project, date, metric, degree, and detail. Never shorten or condense bullets.
+   - Never invent skills, companies, dates, or experience not present in the original.
+
+4. TECHNICAL SKILLS CATEGORIES:
+   - Organize technical skills into categorized bullet points with bold titles:
+     - **Languages:** skill1, skill2
+     - **Backend & Frameworks:** framework1, framework2
+     - **Microservices & APIs:** api1, api2
+     - **Databases & Data:** db1, db2
+     - **Cloud:** cloud1, cloud2
+     - **DevOps & CI/CD:** tool1, tool2
+     - **Monitoring:** tool1, tool2
+     - **Testing:** tool1, tool2
+
+5. EMPLOYMENT HISTORY STRUCTURE:
+   - For every position, strictly format as:
+     Organisation: [Company Name, Location] | [Dates, e.g. Feb 2022 – Present]
+     Role: [Exact Job Title]
+     Responsibilities
+     - [Bullet point]
+     - [Bullet point]
+     (Include subheadings like **Key Achievements** or **Regulatory Engineering** if present in original)
+     Technologies: [List of technologies used in this role, if provided in original]
+
+6. USER INSTRUCTIONS PRECEDENCE:
+   - If the user provides custom instructions below, follow them precisely alongside these master rules.`;
+
+    const userPrompt = `CV CONTENT TO REFORMAT:\n${rawText}\n\n${customInstructions ? 'ADDITIONAL USER FORMATTING INSTRUCTIONS:\n' + customInstructions : ''}`;
 
     try {
-      const formattedOutput = await callClaude(systemPrompt, `RESUME TO REFORMAT (Follow the 12 Master Formatting Rules strictly):\n${rawText}`, 6000);
+      const formattedOutput = await callClaude(systemPrompt, userPrompt, 6000);
       
       const paper = document.getElementById('formattedResumePaper');
       paper.innerHTML = formatResumePaper(formattedOutput);
@@ -1630,12 +1769,12 @@ MASTER RULES FOR CV FORMATTING (STRICT COMPLIANCE):
       
       btn.disabled = false;
       btn.innerHTML = origText;
-      showToast('Resume standardized to exact Calibri layout!');
-      logActivity('Formatted candidate CV to standard Calibri executive layout');
+      showToast('Resume standardized to master executive layout!');
+      logActivity('Formatted candidate CV to master executive layout');
     } catch(err) {
       btn.disabled = false;
       btn.innerHTML = origText;
-      showToast('Resume formatting failed — see details below', true);
+      showToast('Resume formatting failed', true);
       const paper = document.getElementById('formattedResumePaper');
       paper.innerHTML = `<div style="padding:20px;"><p style="color:var(--red); font-weight:600; margin-bottom:8px;">Resume formatting failed</p><pre style="white-space:pre-wrap; font-family:var(--font-body); color:var(--red); font-size:13px; margin:0;">${esc(err.message)}</pre></div>`;
       document.getElementById('fmtResultArea').style.display = 'block';
@@ -1643,30 +1782,28 @@ MASTER RULES FOR CV FORMATTING (STRICT COMPLIANCE):
     }
   };
 
-  // NATIVE SELECTABLE VECTOR TEXT PDF EXPORT VIA PRINT ENGINE
+  // NATIVE 100% SELECTABLE VECTOR TEXT PDF EXPORT
   document.getElementById('fmtPdfBtn').onclick = ()=>{
     window.print();
-    showToast('Select "Save as PDF" in print window for 100% copyable text PDF');
+    showToast('Select "Save as PDF" for 100% copyable, ATS-friendly vector text PDF');
   };
 
-  // WORD EXPORT (.doc) WITH UTF-8 BOM FIX
+  // WORD EXPORT (.doc)
   document.getElementById('fmtDocBtn').onclick = ()=>{
     const content = document.getElementById('formattedResumePaper').innerHTML;
-    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Formatted Resume</title><style>body{font-family:'Calibri',sans-serif;}</style></head><body>";
+    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Executive Resume</title><style>body{font-family:'Calibri',sans-serif; font-size:11pt; color:#000;}</style></head><body>";
     const footer = "</body></html>";
     const blob = new Blob(['\ufeff' + header + content + footer], { type: 'application/msword;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'Formatted_Executive_Resume.doc';
+    a.download = 'Executive_Resume.doc';
     a.click();
     showToast('Downloaded Word Resume!');
   };
 }
 
-/* =========================================================
-   CANDIDATE MODAL & SINGLE AUTO-FILL
-========================================================= */
+/* CANDIDATE MODAL & SINGLE AUTO-FILL */
 function populateJobSelect(selectedJobId){
   const sel=document.getElementById('candJobSelect'); if(!sel) return;
   sel.innerHTML='<option value="">No job linked</option>' + jobs.map(j=>`<option value="${j.id}">${esc(j.title)}</option>`).join('');
@@ -1718,7 +1855,7 @@ wireDropzone(document.getElementById('candDropzone'), document.getElementById('c
         status.textContent = '✓ Profile details auto-filled — please double-check before saving.';
         showToast('Resume auto-filled successfully!');
       } else {
-        status.textContent = '⚠ Resume text saved, but AI could not identify any fields — please fill in manually.';
+        status.textContent = '⚠ Resume text saved, but AI could not identify fields — please fill in manually.';
       }
     }catch(e){ status.textContent = '⚠ Auto-fill failed: ' + e.message; }
   }
@@ -1751,9 +1888,7 @@ document.getElementById('candidateForm').onsubmit=(e)=>{
   showToast('Candidate profile saved!');
 };
 
-/* =========================================================
-   5. SEARCH VIEW
-========================================================= */
+/* SEARCH VIEW */
 function renderSearchView(){
   const shell=document.getElementById('shell');
   const allSkills=[...new Set(candidates.flatMap(c=>c.skills||[]))].sort();
@@ -1797,9 +1932,7 @@ function renderSearchView(){
   run();
 }
 
-/* =========================================================
-   6. RESUME MATCHER
-========================================================= */
+/* RESUME MATCHER */
 let bulkMatchFiles = [];
 
 function renderMatcherView(){
@@ -1885,9 +2018,7 @@ function renderMatcherView(){
   };
 }
 
-/* =========================================================
-   7. JD GENERATOR
-========================================================= */
+/* JD GENERATOR */
 function renderJdView(){
   const shell=document.getElementById('shell');
   shell.innerHTML=`
@@ -1896,7 +2027,7 @@ function renderJdView(){
         <div class="field"><label>Job Title</label><input type="text" id="jdTitle" placeholder="Data Engineer with Azure Experience"></div>
         <div class="field"><label>Location</label><input type="text" id="jdLoc" placeholder="Sunderland, UK"></div>
       </div>
-      <div class="field"><label>Core Responsibilities, Technical Skills & Any Mandatory Requirements</label><textarea id="jdSkills" style="min-height:120px;" placeholder="e.g. Databricks, Azure Data Factory, Power BI, Notebooks... Banking experience is mandatory. 10+ years of experience required."></textarea></div>
+      <div class="field"><label>Core Responsibilities, Technical Skills & Mandatory Requirements</label><textarea id="jdSkills" style="min-height:120px;" placeholder="e.g. Databricks, Azure Data Factory, Power BI, Notebooks... Banking experience is mandatory. 10+ years of experience required."></textarea></div>
       <button class="btn-primary" id="jdBtn">Generate Standardized JD <span class="ai-badge">AI</span></button>
       <div style="display:flex; gap:10px; margin-top:10px;">
         <button class="btn-ghost" id="jdPdfBtn" style="display:none;">📥 Download PDF (Selectable Text)</button>
@@ -1918,7 +2049,7 @@ Job Title: ${title}
 Location: ${loc || 'Remote'}
 
 About the Role
-[Paragraph explaining role]
+[Paragraph]
 
 Key Responsibilities
 - [Bullet point]
@@ -1929,13 +2060,11 @@ Key Skills & Qualifications
 Preferred Qualifications
 - [Bullet point]
 
-MANDATORY — the recruiter has provided the following specific requirements, responsibilities, and details. You MUST incorporate every one of them into the appropriate section above (Responsibilities, Skills & Qualifications, or Preferred Qualifications as fits best) — do not ignore, generalize away, or omit any of them, especially any stated as mandatory or minimum experience requirements:
-${skills || '(No additional details provided — use standard best-practice content for this role.)'}
-
-Use "-" as the only bullet character throughout. Never use "*", "+", or other symbols for bullets.`;
+Incorporate every one of these mandatory requirements:
+${skills || 'Standard best practices for this role.'}`;
 
     const ok = await runAiTask(document.getElementById('jdBtn'), out,
-      'You are an expert recruiter writing high-converting, precise Job Descriptions that always incorporate every specific requirement the recruiter provides, never generic filler that ignores their input.',
+      'You are an expert recruiter writing high-converting, precise Job Descriptions.',
       prompt, 3000);
     if(ok){
       document.getElementById('jdPdfBtn').style.display = 'inline-flex';
@@ -1952,7 +2081,7 @@ Use "-" as the only bullet character throughout. Never use "*", "+", or other sy
     printWin.document.close();
     printWin.focus();
     setTimeout(()=>{ printWin.print(); }, 300);
-    showToast('Select "Save as PDF" in the print window for a selectable-text PDF');
+    showToast('Select "Save as PDF" for selectable-text PDF');
   };
 
   document.getElementById('jdDocBtn').onclick = ()=>{
@@ -1969,9 +2098,7 @@ Use "-" as the only bullet character throughout. Never use "*", "+", or other sy
   };
 }
 
-/* =========================================================
-   8. AI RECRUITER CHAT (WITH FILE ATTACHMENTS & OUTPUT EXPORT)
-========================================================= */
+/* AI RECRUITER CHAT */
 let chatSessions = safeLoad(SESSIONS_KEY, ()=>[{
   id: 'session-1',
   title: 'Java Developer Screening',
@@ -1989,7 +2116,7 @@ function renderAssistantView(){
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
         <div>
           <p class="section-title">AI Recruiter Assistant</p>
-          <p class="section-sub">Multi-session recruiter advisor with file attachment analysis, memory persistence, and PDF/Word export.</p>
+          <p class="section-sub">Multi-session recruiter advisor with file attachment analysis & memory persistence.</p>
         </div>
         <button class="btn-primary btn-small" id="newChatBtn">+ New Chat Session</button>
       </div>
@@ -2002,9 +2129,9 @@ function renderAssistantView(){
           <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
             <div id="chatFileStatus" style="font-size:12px; font-weight:600; color:var(--indigo);"></div>
             <div class="chat-input-row">
-              <button class="btn-ghost btn-small" id="chatAttachBtn" title="Attach file to chat" style="padding:8px 12px;">📎 Attach File</button>
+              <button class="btn-ghost btn-small" id="chatAttachBtn" title="Attach file" style="padding:8px 12px;">📎 Attach File</button>
               <input type="file" id="chatFileInput" accept=".pdf,.docx,.txt" style="display:none;">
-              <input type="text" id="chatInput" placeholder="Ask screening questions, analyze attached CV, sourcing boolean, strategy...">
+              <input type="text" id="chatInput" placeholder="Ask screening questions, analyze attached CV, sourcing boolean...">
               <button class="btn-primary" id="chatSendBtn">Send</button>
             </div>
           </div>
@@ -2074,7 +2201,7 @@ function renderAssistantView(){
     btn.disabled=true;
     try{
       const reply = await callClaude(
-        'You are an expert Talent Acquisition & Boolean Sourcing Advisor. If asked to write a Job Description, use Job Title/Location/About the Role/Key Responsibilities/Key Skills & Qualifications/Preferred Qualifications with "-" bullets. If asked for Boolean strings, compile them using AST rules for LinkedIn Recruiter, Google X-Ray, GitHub, and SQL.',
+        'You are an expert Talent Acquisition & Boolean Sourcing Advisor. Format responses clearly with headers and bullet points.',
         session.messages.slice(-8).map(m => (m.role==='user'?'Recruiter':'You') + ': ' + m.content).join('\n\n')
       );
       session.messages.push({role:'assistant',content:reply});
@@ -2114,11 +2241,7 @@ window.deleteSession = function(event, sid){
   event.stopPropagation();
   if(confirm('Delete this chat session?')){
     chatSessions = chatSessions.filter(s => s.id !== sid);
-    if(chatSessions.length > 0){
-      activeSessionId = chatSessions[0].id;
-    } else {
-      activeSessionId = null;
-    }
+    activeSessionId = chatSessions.length > 0 ? chatSessions[0].id : null;
     saveSessions();
     renderChatSessionsList();
     renderActiveChatMessages(true);
@@ -2141,9 +2264,7 @@ function renderActiveChatMessages(scroll){
   if(scroll) win.scrollTop=win.scrollHeight;
 }
 
-/* =========================================================
-   9. AI VISA EXPERT
-========================================================= */
+/* AI VISA EXPERT */
 function renderVisaView(){
   const shell=document.getElementById('shell');
   shell.innerHTML=`
@@ -2151,7 +2272,7 @@ function renderVisaView(){
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
         <div>
           <p class="section-title">🛂 AI Visa & Global Immigration Advisory Expert</p>
-          <p class="section-sub">Instant legal pathways, sponsorship rules, processing fees, required documents, and timelines for global hiring.</p>
+          <p class="section-sub">Instant pathways, sponsorship rules, fees, documents, and timelines for global hiring.</p>
         </div>
       </div>
 
@@ -2164,28 +2285,14 @@ function renderVisaView(){
       </div>
 
       <div class="two-col">
-        <div class="field">
-          <label>Destination Country</label>
-          <input type="text" id="visaCountry" placeholder="e.g. United Kingdom, USA, Germany, Canada, UAE">
-        </div>
-        <div class="field">
-          <label>Candidate Nationality / Origin</label>
-          <input type="text" id="visaOrigin" placeholder="e.g. India, Nigeria, Brazil, Pakistan, Philippines">
-        </div>
+        <div class="field"><label>Destination Country</label><input type="text" id="visaCountry" placeholder="e.g. United Kingdom, USA, Germany"></div>
+        <div class="field"><label>Candidate Nationality</label><input type="text" id="visaOrigin" placeholder="e.g. India, Nigeria, Brazil"></div>
       </div>
 
-      <div class="field">
-        <label>Job Role & Proposed Salary Offer</label>
-        <input type="text" id="visaRoleSalary" placeholder="e.g. Senior Data Engineer (£65,000 / $130,000 / €70,000)">
-      </div>
-
-      <div class="field">
-        <label>Specific Immigration Query or Case Scenario</label>
-        <textarea id="visaQuery" placeholder="Ask about sponsorship eligibility, employer compliance, dependent visas, relocation costs, processing timelines, visa transfer options, etc."></textarea>
-      </div>
+      <div class="field"><label>Job Role & Proposed Salary</label><input type="text" id="visaRoleSalary" placeholder="e.g. Senior Data Engineer (£65,000 / $130,000)"></div>
+      <div class="field"><label>Specific Immigration Query</label><textarea id="visaQuery" placeholder="Ask about sponsorship eligibility, compliance, dependent visas, relocation costs, processing timelines..."></textarea></div>
 
       <button class="btn-primary" id="visaRunBtn">Consult AI Immigration Expert <span class="ai-badge">AI</span></button>
-
       <div class="formatted-output empty" id="visaOutput">AI Visa & Immigration analysis will appear here...</div>
     </div>
   `;
@@ -2197,31 +2304,15 @@ function renderVisaView(){
     const query = document.getElementById('visaQuery').value.trim();
     const out = document.getElementById('visaOutput');
 
-    if(!country && !query){
-      showToast('Please specify a destination country or immigration query', true);
-      return;
-    }
+    if(!country && !query){ showToast('Please specify a country or query', true); return; }
 
-    const systemPrompt = `You are a Senior Global Mobility & Corporate Immigration Specialist. 
-Provide legal and procedural advice on work visas, employer sponsorship obligations, government fees, processing times, income thresholds, family dependent rules, and compliance risks.
-Always format output with clear bold headers, bullet points, and clean sections.`;
+    const userPrompt = `GLOBAL VISA CONSULTATION:
+Destination: ${country || 'Global'}
+Origin: ${origin || 'Unspecified'}
+Role & Salary: ${role || 'Not specified'}
+Query: ${query || 'Provide complete immigration guide.'}`;
 
-    const userPrompt = `GLOBAL VISA CONSULTATION REQUEST:
-- Destination Country: ${country || 'Global/Unspecified'}
-- Candidate Citizenship/Origin: ${origin || 'Any/Unspecified'}
-- Target Role & Salary Offer: ${role || 'Not specified'}
-- Query Details: ${query || 'Provide a complete immigration guide for foreign tech hiring in this country.'}
-
-Please provide a detailed advisory breakdown:
-1. Primary Visa Categories & Eligibility Criteria
-2. Employer Sponsorship & License Requirements
-3. Minimum Salary & SOC Code Thresholds
-4. Total Government & Legal Processing Fees
-5. Average Processing Timelines & Fast-Track Options
-6. Required Documents for Candidate & Employer
-7. Family Dependent & PR/Citizenship Pathway Details`;
-
-    await runAiTask(document.getElementById('visaRunBtn'), out, systemPrompt, userPrompt);
+    await runAiTask(document.getElementById('visaRunBtn'), out, 'You are a Senior Corporate Immigration Specialist.', userPrompt);
     logActivity(`Ran AI Immigration consultation for ${country || 'Visa Query'}`);
   };
 }
@@ -2231,9 +2322,7 @@ window.quickVisaQuery = function(topicStr){
   document.getElementById('visaRunBtn').click();
 };
 
-/* =========================================================
-   9B. AI LEGAL EXPERT
-========================================================= */
+/* AI LEGAL EXPERT */
 function renderLegalView(){
   const shell=document.getElementById('shell');
   shell.innerHTML=`
@@ -2241,206 +2330,116 @@ function renderLegalView(){
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
         <div>
           <p class="section-title">⚖️ AI Legal Expert</p>
-          <p class="section-sub">Multi-jurisdiction legal advisory, contract & Statement of Work drafting, and document review — corporate, employment, IP, data privacy, tax, and more.</p>
+          <p class="section-sub">Multi-jurisdiction legal advisory, contract & SOW drafting, and document review.</p>
         </div>
-      </div>
-
-      <div class="key-warning" style="margin-bottom:16px;">
-        This tool provides general legal information and drafts, not a substitute for a licensed lawyer. For high-stakes, high-risk, or jurisdiction-critical matters, always have output reviewed by qualified local counsel before relying on or signing anything.
       </div>
 
       <div class="two-col">
         <div class="field">
-          <label>What do you need?</label>
+          <label>Mode</label>
           <select id="legalMode">
             <option value="question">Ask a Legal Question</option>
-            <option value="contract">Generate a Contract / Document</option>
-            <option value="sow">Generate a Statement of Work (SOW)</option>
-            <option value="review">Review an Uploaded Contract or SOW</option>
+            <option value="contract">Generate Contract</option>
+            <option value="sow">Generate SOW</option>
+            <option value="review">Review Contract / SOW</option>
           </select>
         </div>
-        <div class="field">
-          <label>Jurisdiction / Governing Country</label>
-          <input type="text" id="legalJurisdiction" placeholder="e.g. United Kingdom, India, USA (Delaware), Germany, UAE">
-        </div>
+        <div class="field"><label>Jurisdiction</label><input type="text" id="legalJurisdiction" placeholder="e.g. United Kingdom, India, USA"></div>
       </div>
 
-      <div class="field" id="legalDocTypeWrap">
-        <label>Document Type</label>
+      <div class="field" id="legalDocTypeWrap"><label>Document Type</label>
         <select id="legalDocType">
           <option>Employment Agreement</option>
           <option>Independent Contractor Agreement</option>
           <option>Non-Disclosure Agreement (NDA)</option>
           <option>Service Agreement</option>
-          <option>Consultancy Agreement</option>
-          <option>Vendor & Supplier Agreement</option>
-          <option>Partnership Agreement</option>
           <option>Offer Letter</option>
-          <option>Freelance Contract</option>
-          <option>SaaS Agreement</option>
-          <option>Data Processing Agreement (DPA)</option>
-          <option>Other (specify in details below)</option>
         </select>
       </div>
 
-      <div class="field" id="legalPracticeAreaWrap">
-        <label>Relevant Area of Law (optional, helps focus the answer)</label>
-        <select id="legalPracticeArea">
-          <option value="">Not sure / general</option>
-          <option>Corporate Law</option>
-          <option>Employment & Labour Law</option>
-          <option>Contract Law</option>
-          <option>Commercial Law</option>
-          <option>Consumer Protection Law</option>
-          <option>Intellectual Property Law</option>
-          <option>Data Privacy & Compliance (GDPR, CCPA, etc.)</option>
-          <option>Immigration & Visa-related Legal Matters</option>
-          <option>Civil Law</option>
-          <option>Criminal Law (general guidance only)</option>
-          <option>Tax & Regulatory Compliance</option>
-          <option>Business & Commercial Regulations</option>
-        </select>
-      </div>
-
-      <div class="field" id="legalUploadWrap" style="display:none;">
-        <label>Upload Contract / SOW to Review (.pdf, .docx, .txt)</label>
-        <div class="dropzone" id="legalDropzone" style="padding:20px;">
-          <div class="dropzone-text">📎 Attach the document to review</div>
-        </div>
+      <div class="field" id="legalUploadWrap" style="display:none;"><label>Upload File to Review (.pdf, .docx, .txt)</label>
+        <div class="dropzone" id="legalDropzone" style="padding:20px;"><div class="dropzone-text">📎 Attach file</div></div>
         <input type="file" id="legalFileInput" accept=".pdf,.docx,.txt" style="display:none;">
       </div>
 
-      <div class="field">
-        <label id="legalDetailsLabel">Details / Question / Scope</label>
-        <textarea id="legalDetails" style="min-height:140px;" placeholder="Describe what you need — e.g. parties involved, key terms, deliverables, timelines, payment terms, specific concerns, or paste/attach the document text for review."></textarea>
-      </div>
+      <div class="field"><label id="legalDetailsLabel">Details / Scope / Text</label><textarea id="legalDetails" style="min-height:140px;" placeholder="Provide details..."></textarea></div>
 
       <button class="btn-primary" id="legalRunBtn">Consult AI Legal Expert <span class="ai-badge">AI</span></button>
       <div style="display:flex; gap:10px; margin-top:10px;">
         <button class="btn-ghost" id="legalPdfBtn" style="display:none;">📥 Download PDF (Selectable Text)</button>
         <button class="btn-ghost" id="legalDocBtn" style="display:none;">📄 Download Word (.doc)</button>
       </div>
-
-      <div class="formatted-output empty" id="legalOutput">AI Legal Expert output will appear here...</div>
+      <div class="formatted-output empty" id="legalOutput">AI Legal output will appear here...</div>
     </div>
   `;
 
   const modeSelect = document.getElementById('legalMode');
-  const updateModeUI = ()=>{
-    const mode = modeSelect.value;
-    document.getElementById('legalDocTypeWrap').style.display = (mode==='contract') ? 'block' : 'none';
-    document.getElementById('legalUploadWrap').style.display = (mode==='review') ? 'block' : 'none';
-    const labels = {
-      question: 'Your Legal Question',
-      contract: 'Key Terms to Include (parties, duration, payment, special clauses, etc.)',
-      sow: 'Scope, Deliverables, Timelines, Milestones, Payment Terms, Assumptions',
-      review: 'Paste the document text here (or attach a file above) and note any specific concerns',
-    };
-    document.getElementById('legalDetailsLabel').textContent = labels[mode] || 'Details';
+  modeSelect.onchange = ()=>{
+    const m = modeSelect.value;
+    document.getElementById('legalDocTypeWrap').style.display = (m==='contract') ? 'block' : 'none';
+    document.getElementById('legalUploadWrap').style.display = (m==='review') ? 'block' : 'none';
   };
-  modeSelect.onchange = updateModeUI;
-  updateModeUI();
 
   wireDropzone(document.getElementById('legalDropzone'), document.getElementById('legalFileInput'), async (files)=>{
     if(files[0]){
       try{
         const text = await extractTextFromFile(files[0]);
         document.getElementById('legalDetails').value = text;
-        showToast('Document loaded for review!');
+        showToast('Document loaded!');
       }catch(e){ showToast(e.message, true); }
     }
   });
 
   document.getElementById('legalRunBtn').onclick = async ()=>{
-    const mode = document.getElementById('legalMode').value;
+    const mode = modeSelect.value;
     const jurisdiction = document.getElementById('legalJurisdiction').value.trim();
-    const practiceArea = document.getElementById('legalPracticeArea').value;
     const docType = document.getElementById('legalDocType').value;
     const details = document.getElementById('legalDetails').value.trim();
     const out = document.getElementById('legalOutput');
 
-    if(!details && mode !== 'review'){ showToast('Please provide some details or a question first', true); return; }
-    if(!details && mode === 'review'){ showToast('Please attach or paste the document to review', true); return; }
+    if(!details){ showToast('Please provide details or text', true); return; }
 
-    const systemPrompt = `You are an elite AI Legal Expert providing comprehensive legal assistance across multiple jurisdictions worldwide (UK, India, US, EU, Middle East, and other major jurisdictions). You are NOT limited to a single country's laws — always identify clearly which jurisdiction's laws you are applying, and note where laws differ meaningfully by region if the jurisdiction is unspecified or the question spans multiple.
+    const userPrompt = `MODE: ${mode}\nJurisdiction: ${jurisdiction || 'General'}\nDocType: ${docType}\n\nDetails:\n${details}`;
 
-You have comprehensive knowledge of: Corporate Law, Employment & Labour Law, Contract Law, Commercial Law, Consumer Protection Law, Intellectual Property Law, Data Privacy & Compliance (GDPR, CCPA, and equivalents), Immigration & Visa-related Legal Matters, Civil Law, Criminal Law (general guidance only), Tax & Regulatory Compliance, and Business & Commercial Regulations.
-
-Core rules:
-- Always state which jurisdiction's law you are applying, prominently, near the top of your answer.
-- Explain rights, obligations, risks, and options in clear, plain language — avoid unexplained jargon.
-- When drafting contracts, SOWs, or other legal documents, produce complete, professionally structured, ready-to-use documents with proper clause numbering and standard legal sections — not abbreviated examples.
-- When reviewing a document, systematically identify: missing clauses, high-risk or one-sided terms, ambiguous language, compliance issues, renewal/termination provisions, payment obligations, liability/indemnity risk, and confidentiality provisions — then give a plain-English summary and concrete, actionable recommendations.
-- Always close with a clear, honest note on when the user should have a qualified local lawyer review this before relying on it or signing anything — be specific about what makes a matter high-risk enough to warrant that.
-- Never claim to be a substitute for a licensed attorney, and never state something as settled law if it is genuinely uncertain or jurisdiction-dependent — flag that uncertainty explicitly instead.
-- Use clean headers, standardized "-" bullet points only (never "*" or "+"), and numbered clauses for documents. Never truncate — a generated contract or SOW must be complete, with every standard section fully drafted out, not left as a placeholder.`;
-
-    let userPrompt = '';
-    if(mode === 'question'){
-      userPrompt = `LEGAL QUESTION\nJurisdiction: ${jurisdiction || 'Not specified — note regional variation if relevant'}\nArea of Law: ${practiceArea || 'Not specified — infer from the question'}\n\nQuestion:\n${details}`;
-    } else if(mode === 'contract'){
-      userPrompt = `GENERATE A COMPLETE, READY-TO-USE LEGAL DOCUMENT\nDocument Type: ${docType}\nGoverning Jurisdiction: ${jurisdiction || 'Not specified — use a generally standard structure and note that governing law should be confirmed'}\nArea of Law: ${practiceArea || docType}\n\nKey terms and requirements provided by the user (incorporate every one of these, do not omit any):\n${details}\n\nDraft the complete document with all standard sections for this document type (parties, recitals/background, definitions, obligations, term & termination, payment terms if applicable, confidentiality, liability/indemnity, dispute resolution, governing law, signature blocks, etc.), fully written out — not a template with blanks left unfilled where the user has given you the information.`;
-    } else if(mode === 'sow'){
-      userPrompt = `GENERATE A DETAILED STATEMENT OF WORK (SOW)\nGoverning Jurisdiction: ${jurisdiction || 'Not specified'}\n\nUser-provided scope and details (incorporate every one of these):\n${details}\n\nInclude fully drafted sections for: Scope of Work, Deliverables, Timeline & Milestones, Payment Terms, Assumptions & Dependencies, Acceptance Criteria, Roles & Responsibilities, Change Management, and Term & Termination.`;
-    } else if(mode === 'review'){
-      userPrompt = `REVIEW THIS CONTRACT/SOW FOR LEGAL RISK\nGoverning Jurisdiction (if known): ${jurisdiction || 'Not specified — flag if governing law clause is missing or unclear'}\n\nDocument text to review:\n${details.slice(0, 12000)}\n\nProvide: (1) a plain-English summary of what this document does, (2) a list of missing clauses or provisions a document like this would normally need, (3) high-risk, one-sided, or ambiguous clauses with the exact issue explained, (4) compliance concerns if any, (5) concrete recommended edits, (6) a clear verdict on whether this is safe to sign as-is, needs revision, or needs a lawyer's review before proceeding.`;
-    }
-
-    const ok = await runAiTask(document.getElementById('legalRunBtn'), out, systemPrompt, userPrompt, 4096);
+    const ok = await runAiTask(document.getElementById('legalRunBtn'), out, 'You are an AI Legal Expert across global jurisdictions.', userPrompt, 4096);
     if(ok){
       document.getElementById('legalPdfBtn').style.display = 'inline-flex';
       document.getElementById('legalDocBtn').style.display = 'inline-flex';
     }
-    logActivity(`AI Legal Expert: ${mode} (${jurisdiction || 'unspecified jurisdiction'})`);
   };
 
   document.getElementById('legalPdfBtn').onclick = ()=>{
     const printWin = window.open('', '_blank');
-    printWin.document.write(`<html><head><title>Legal Document</title>
-      <style>body{font-family:Calibri,Arial,sans-serif; padding:40px; line-height:1.6; color:#111;} h1,h2,h3{color:#1a1a2e;} ul{margin:8px 0 14px 22px;}</style>
-      </head><body>${document.getElementById('legalOutput').innerHTML}</body></html>`);
+    printWin.document.write(`<html><head><title>Legal Document</title><style>body{font-family:Calibri,sans-serif; padding:40px; line-height:1.6;}</style></head><body>${document.getElementById('legalOutput').innerHTML}</body></html>`);
     printWin.document.close();
     printWin.focus();
     setTimeout(()=>{ printWin.print(); }, 300);
-    showToast('Select "Save as PDF" in the print window for a selectable-text PDF');
   };
 
   document.getElementById('legalDocBtn').onclick = ()=>{
     const content = document.getElementById('legalOutput').innerHTML;
-    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Legal Document</title><style>body{font-family:'Calibri',sans-serif;}</style></head><body>";
-    const footer = "</body></html>";
-    const blob = new Blob(['\ufeff' + header + content + footer], { type: 'application/msword;charset=utf-8' });
+    const blob = new Blob(['\ufeff' + content], { type: 'application/msword;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'Legal_Document.doc';
-    a.click();
-    showToast('Downloaded Word document!');
+    const a = document.createElement('a'); a.href = url; a.download = 'Legal_Document.doc'; a.click();
   };
 }
 
-/* =========================================================
-   10. EMAIL GENERATOR (WITH PRESET & CUSTOM COMMAND SCENARIO)
-========================================================= */
+/* EMAIL GENERATOR */
 function renderEmailView(){
   const shell=document.getElementById('shell');
   shell.innerHTML=`
     <div class="card">
       <div class="two-col">
         <div class="field"><label>Candidate Name</label><input type="text" id="emCandidate" placeholder="Priya Sharma"></div>
-        <div class="field"><label>Role</label><input type="text" id="emRole" placeholder="Data Engineer with Azure Experience"></div>
+        <div class="field"><label>Role</label><input type="text" id="emRole" placeholder="Data Engineer"></div>
       </div>
-      <div class="field"><label>Email Purpose Preset</label>
+      <div class="field"><label>Purpose Preset</label>
         <select id="emPurpose">
           <option>Initial Outreach</option><option>Interview Invitation</option>
           <option>Offer Letter Intro</option><option>Respectful Rejection</option>
         </select>
       </div>
-
-      <div class="field">
-        <label>Custom Outreach Command / Specific Scenario (Optional)</label>
-        <textarea id="emCustomPrompt" style="min-height:90px;" placeholder="e.g. Draft a warm follow-up email after 2 weeks for a Senior Azure Architect who ghosted after the tech interview, offering a 10% salary bump and flexible remote work options."></textarea>
-      </div>
+      <div class="field"><label>Custom Scenario (Optional)</label><textarea id="emCustomPrompt" placeholder="e.g. Warm follow-up offering flexible remote options..."></textarea></div>
 
       <button class="btn-primary" id="emBtn">Draft Email <span class="ai-badge">AI</span></button>
       <div class="formatted-output empty" id="emOutput">Drafted email will appear here...</div>
@@ -2453,21 +2452,15 @@ function renderEmailView(){
     const customPrompt=document.getElementById('emCustomPrompt').value.trim();
     const out=document.getElementById('emOutput');
 
-    if(!name && !customPrompt){ showToast('Please enter candidate name or a custom scenario', true); return; }
+    if(!name && !customPrompt){ showToast('Please enter candidate name or scenario', true); return; }
 
-    const userPrompt = customPrompt 
-      ? `Draft an email with Subject line based on this scenario:\nCandidate Name: ${name || 'Candidate'}\nRole: ${role || 'Target Role'}\nCustom Scenario: ${customPrompt}`
-      : `Purpose: ${purpose}\nCandidate: ${name}\nRole: ${role}`;
+    const userPrompt = customPrompt ? `Scenario: ${customPrompt}` : `Purpose: ${purpose}\nCandidate: ${name}\nRole: ${role}`;
 
-    await runAiTask(document.getElementById('emBtn'), out,
-      'Write professional recruitment emails with Subject line and polite body.',
-      userPrompt);
+    await runAiTask(document.getElementById('emBtn'), out, 'Write professional recruitment emails with Subject line.', userPrompt);
   };
 }
 
-/* =========================================================
-   11. LINKEDIN MESSAGE (WITH PRESET & CUSTOM COMMAND SCENARIO)
-========================================================= */
+/* LINKEDIN MESSAGE */
 function renderLinkedinView(){
   const shell=document.getElementById('shell');
   shell.innerHTML=`
@@ -2476,11 +2469,7 @@ function renderLinkedinView(){
         <div class="field"><label>Candidate Name</label><input type="text" id="liCandidate" placeholder="Arjun Mehta"></div>
         <div class="field"><label>Target Role</label><input type="text" id="liRole" placeholder="Product Designer"></div>
       </div>
-
-      <div class="field">
-        <label>Custom Outreach Context / Personal Note (Optional)</label>
-        <textarea id="liCustomPrompt" style="min-height:90px;" placeholder="e.g. Mention we met at AWS Summit London, compliment their recent post on Databricks Lakehouse, and invite them for a 10-min coffee chat."></textarea>
-      </div>
+      <div class="field"><label>Custom Context (Optional)</label><textarea id="liCustomPrompt" placeholder="e.g. Mention AWS Summit connection..."></textarea></div>
 
       <button class="btn-primary" id="liBtn">Generate LinkedIn Note <span class="ai-badge">AI</span></button>
       <div class="formatted-output empty" id="liOutput">Generated message will appear here...</div>
@@ -2492,36 +2481,29 @@ function renderLinkedinView(){
     const customPrompt=document.getElementById('liCustomPrompt').value.trim();
     const out=document.getElementById('liOutput');
 
-    if(!name && !customPrompt){ showToast('Please enter candidate name or a custom scenario', true); return; }
+    if(!name && !customPrompt){ showToast('Please enter candidate name or context', true); return; }
 
-    const userPrompt = customPrompt
-      ? `Candidate: ${name || 'Candidate'}\nRole: ${role || 'Role'}\nCustom Context: ${customPrompt}`
-      : `Candidate: ${name}\nRole: ${role}`;
+    const userPrompt = customPrompt ? `Context: ${customPrompt}` : `Candidate: ${name}\nRole: ${role}`;
 
-    await runAiTask(document.getElementById('liBtn'), out,
-      'Write short, warm LinkedIn connection requests strictly under 300 characters.',
-      userPrompt);
+    await runAiTask(document.getElementById('liBtn'), out, 'Write short, warm LinkedIn connection notes under 300 characters.', userPrompt);
   };
 }
 
-/* =========================================================
-   12. AI AST BOOLEAN SEARCH COMPILER & GENERATOR
-========================================================= */
+/* AI AST BOOLEAN SEARCH */
 function renderBooleanView(){
   const shell=document.getElementById('shell');
   shell.innerHTML=`
     <div class="card">
-      <p class="section-title">AI Multi-Platform Boolean Search Generator & Compiler</p>
-      <p class="section-sub">Driven by AST Lexer & Parser rules. Generates high-yield, error-free Boolean search strings for LinkedIn Recruiter, Google X-Ray, GitHub, and Elasticsearch/SQL.</p>
+      <p class="section-title">AI Multi-Platform Boolean Search Generator</p>
+      <p class="section-sub">Driven by AST rules. Generates search strings for LinkedIn Recruiter, Google X-Ray, GitHub, and SQL.</p>
 
       <div class="two-col">
-        <div class="field"><label>Target Job Titles (comma separated)</label><input type="text" id="boolTitles" placeholder="Data Engineer, Azure Data Engineer, Databricks Engineer"></div>
-        <div class="field"><label>Mandatory Technical Skills & Tools</label><input type="text" id="boolMust" placeholder="Azure, Databricks, Power BI, PySpark, Synapse"></div>
+        <div class="field"><label>Target Job Titles</label><input type="text" id="boolTitles" placeholder="Data Engineer, Azure Data Engineer"></div>
+        <div class="field"><label>Mandatory Skills</label><input type="text" id="boolMust" placeholder="Azure, Databricks, Power BI"></div>
       </div>
-      <div class="field"><label>Location / Country Constraint (Optional)</label><input type="text" id="boolLoc" placeholder="Sunderland OR Newcastle OR UK"></div>
+      <div class="field"><label>Location Constraint</label><input type="text" id="boolLoc" placeholder="Sunderland OR Newcastle OR UK"></div>
 
       <button class="btn-primary" id="boolBtn">Generate AI Boolean Strings <span class="ai-badge">AI</span></button>
-
       <div class="formatted-output empty" id="boolOutput">AI-generated Boolean search strings will appear here...</div>
     </div>
   `;
@@ -2532,77 +2514,38 @@ function renderBooleanView(){
     const loc = document.getElementById('boolLoc').value.trim();
     const out = document.getElementById('boolOutput');
 
-    if(!titles && !skills){
-      showToast('Please enter job titles or mandatory skills', true);
-      return;
-    }
+    if(!titles && !skills){ showToast('Please enter titles or skills', true); return; }
 
-    const systemPrompt = `You are a Master Talent Sourcing Specialist, Lexer/Parser Architect, and Principal Boolean Compiler.
-You generate 100% accurate, error-free, high-yield Boolean search strings optimized specifically for different sourcing engines based on AST Lexer/Parser rules:
+    const systemPrompt = `You are a Sourcing Sourcing Specialist and AST Boolean Compiler. Always wrap generated Boolean strings in triple backticks (\`\`\`boolean ... \`\`\`).`;
 
-1. LEXER & TOKENIZER RULES:
-   - LPAREN / RPAREN: '(' and ')' for explicit precedence grouping.
-   - AND / OR / NOT: Standard uppercase operators.
-   - QUOTED_TERM: Exact phrases wrapped in double quotes "...".
-   - IMPLICIT AND: If two terms/groups are placed adjacent without an operator (e.g. "Java" "Developer"), automatically insert an implicit AND.
-
-2. OPERATOR PRECEDENCE ORDER (Highest to Lowest):
-   1. Parentheses ()
-   2. Quoted Phrases / Exact Terms
-   3. NOT operator
-   4. AND operator (including implicit AND)
-   5. OR operator
-
-3. CRITICAL ENGINE COMPILATION DELIVERABLES:
-   a) LinkedIn Recruiter / Sales Navigator String (NEVER use fake operators like title: or intitle: or location: on LinkedIn! Use clean title synonyms in quotes separated by uppercase OR: ("Title 1" OR "Title 2") AND (Skill1 OR Skill2) AND (Location1 OR Location2)).
-   b) Google X-Ray LinkedIn Profile Query (site:linkedin.com/in/ + title phrases + skill groups + noise filters -intitle:jobs -inurl:dir).
-   c) GitHub Technical Sourcing Query (site:github.com + developer profile signatures ("joined on" OR "contributions") + tech stack).
-   d) Elasticsearch / SQL Query Filter (Elasticsearch bool query / PostgreSQL tsquery syntax).
-
-4. SYNTAX AUTO-REPAIR: Auto-close unbalanced parentheses/quotes. Sanitize special characters.
-
-Always wrap EVERY generated Boolean search string in triple backticks with 'boolean' syntax tag (\`\`\`boolean ... \`\`\`) so that a 1-click '📋 Copy String' button appears above each query.`;
-
-    const userPrompt = `Compile specialized, error-free Boolean search strings for:
-- Job Titles: ${titles || 'Software Engineer'}
-- Key Skills: ${skills || 'General Tech'}
-- Target Location: ${loc || 'Any'}
-
-Please output 4 distinct, copyable Boolean search blocks with brief explanation for each:
-1. LinkedIn Recruiter / Sales Navigator Search String
-2. Google X-Ray Search String (site:linkedin.com/in/)
-3. GitHub / Technical Sourcing String (site:github.com)
-4. Elasticsearch / PostgreSQL Query Syntax`;
+    const userPrompt = `Generate 4 Boolean strings for:\nTitles: ${titles}\nSkills: ${skills}\nLocation: ${loc}`;
 
     await runAiTask(document.getElementById('boolBtn'), out, systemPrompt, userPrompt);
     logActivity(`Generated AI AST Boolean sourcing strings`);
   };
 }
 
-/* =========================================================
-   13. TECHNICAL INTERVIEW PLANNER
-========================================================= */
+/* TECHNICAL INTERVIEW PLANNER */
 function renderInterviewView(){
   const shell=document.getElementById('shell');
   shell.innerHTML=`
     <div class="card">
-      <p class="section-title">Technical Interview Question Kit Generator (40 Questions)</p>
-      <p class="section-sub">Generates a comprehensive 40-question technical interview evaluation kit categorized by level, frameworks, system design, and red flags.</p>
+      <p class="section-title">Technical Interview Question Kit (40 Questions)</p>
+      <p class="section-sub">Generates a comprehensive 40-question technical interview evaluation kit.</p>
 
       <div class="two-col">
         <div class="field"><label>Target Job Role</label><input type="text" id="ivRole" placeholder="Data Engineer with Azure Experience"></div>
-        <div class="field"><label>Interview Round / Focus</label>
+        <div class="field"><label>Interview Focus</label>
           <select id="ivRound">
-            <option value="Technical Screening & Fundamentals">Technical Screening & Fundamentals</option>
-            <option value="Deep Tech & System Design Architecture">Deep Tech & System Design Architecture</option>
-            <option value="Comprehensive 360 End-to-End Evaluation">Comprehensive 360 End-to-End Evaluation</option>
+            <option>Technical Screening & Fundamentals</option>
+            <option>Deep Tech & System Design Architecture</option>
+            <option>Comprehensive 360 Evaluation</option>
           </select>
         </div>
       </div>
 
-      <button class="btn-primary" id="ivBtn">Generate 40-Question Interview Kit <span class="ai-badge">AI</span></button>
-
-      <div class="formatted-output empty" id="ivOutput">Generated 40-question interview kit will appear here...</div>
+      <button class="btn-primary" id="ivBtn">Generate 40-Question Kit <span class="ai-badge">AI</span></button>
+      <div class="formatted-output empty" id="ivOutput">Generated interview kit will appear here...</div>
     </div>
   `;
 
@@ -2612,38 +2555,15 @@ function renderInterviewView(){
     const out=document.getElementById('ivOutput');
     if(!role){ showToast('Please enter role', true); return; }
 
-    const systemPrompt = `You are a Technical Interview Director and Principal Hiring Manager.
-You MUST generate EXACTLY 40 detailed, highly relevant technical interview questions divided cleanly across categories.
-Format using clean Markdown subheadings (### Category Name) and numbered lists (1. 2. 3...) under each subheading.`;
+    const userPrompt = `Generate a complete 40-Question Technical Interview Kit for ${role} (${round}).
+Divide strictly into 5 categories with 8 questions each (1 to 40). Include candidate evaluation criteria and ideal answers.`;
 
-    const userPrompt = `Generate a complete 40-Question Interview Kit for the role: ${role}
-Interview Focus: ${round}
-
-Divide the 40 questions strictly into these 5 categories (8 questions per category = 40 total):
-
-### Category 1: Junior Level & Core Fundamentals (Questions 1 to 8)
-(Include question text, candidate evaluation criteria, and ideal answers)
-
-### Category 2: Mid-Level Concepts & Framework Mastery (Questions 9 to 16)
-(Include question text, candidate evaluation criteria, and ideal answers)
-
-### Category 3: Senior Level Architecture & System Design (Questions 17 to 24)
-(Include question text, candidate evaluation criteria, and ideal answers)
-
-### Category 4: Real-World Troubleshooting & Practical Scenarios (Questions 25 to 32)
-(Include question text, candidate evaluation criteria, and ideal answers)
-
-### Category 5: Behavioral, Culture Fit & Red Flag Signals (Questions 33 to 40)
-(Include question text, candidate evaluation criteria, and ideal answers)`;
-
-    await runAiTask(document.getElementById('ivBtn'), out, systemPrompt, userPrompt);
+    await runAiTask(document.getElementById('ivBtn'), out, 'You are a Technical Interview Director.', userPrompt);
     logActivity(`Generated 40-Question Interview Kit for ${role}`);
   };
 }
 
-/* =========================================================
-   14. ANALYTICS
-========================================================= */
+/* ANALYTICS */
 function renderAnalyticsView(){
   const shell=document.getElementById('shell');
   const total=candidates.length;
@@ -2680,7 +2600,7 @@ async function runAiTask(btn, outEl, systemPrompt, userPrompt, maxTokens){
   }
 }
 
-/* TOPBAR RESET & THEME */
+/* TOPBAR DIAGNOSTICS & RESET */
 document.getElementById('aiDiagnosticBtn').onclick=async ()=>{
   const btn = document.getElementById('aiDiagnosticBtn');
   const origText = btn.innerHTML;
@@ -2691,14 +2611,9 @@ document.getElementById('aiDiagnosticBtn').onclick=async ()=>{
     const data = await res.json();
     const pools = data.keyPoolSizes || data.activeKeys || {};
     const lines = Object.entries(pools).map(([provider, count]) => `${provider}: ${count}`).join('\n');
-    alert(
-      'AI Backend Diagnostic (zero quota used)\n\n' +
-      (data.message || 'No message returned') +
-      '\n\nKey pool sizes detected by this deployment:\n' + (lines || 'none') +
-      '\n\nIf a number here doesn\'t match what you added in Vercel, you likely need to Redeploy in Vercel after adding/changing environment variables — saving alone does not apply them.'
-    );
+    alert('AI Backend Diagnostic\n\n' + (data.message || 'Active') + '\n\nKey pool sizes:\n' + lines);
   }catch(e){
-    alert('Could not reach the diagnostic endpoint: ' + e.message);
+    alert('Diagnostic check error: ' + e.message);
   }
   btn.disabled = false;
   btn.innerHTML = origText;
