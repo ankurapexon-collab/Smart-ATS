@@ -9,6 +9,15 @@ Do NOT truncate answers midway — complete every generated output in full detai
 
 CRITICAL — ZERO INFORMATION LOSS RULE: Whenever you are asked to reformat, restructure, or standardize existing content (such as a CV/resume), preserve EVERY piece of information from the original — every bullet point, sentence, date, degree, and technical detail. Only change formatting and structure, never omit content or reduce item counts.
 
+EMPLOYMENT HISTORY FORMAT RULE:
+For every position in Employment History, output:
+Organisation: [Organisation Name], [Location], [Country] | [Duration/Tenure]
+Role: [Designation]
+Responsibilities
+- [Bullet 1]
+- [Bullet 2]
+Never put a bullet point before Organisation: or Role:. "Organisation:" and "Role:" must be separate lines.
+
 JOB DESCRIPTION CONSISTENCY RULE: Whenever you generate a Job Description, always use exactly this structure — Job Title / Location / About the Role / Key Responsibilities / Key Skills & Qualifications / Preferred Qualifications — with "-" as the bullet character.`;
 
 const GROQ_MODELS = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile'];
