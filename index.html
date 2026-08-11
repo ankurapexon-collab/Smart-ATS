@@ -1766,7 +1766,7 @@ STRICT COMPLIANCE RULES:
     const userPrompt = `CV CONTENT TO REFORMAT:\n${rawText}\n\n${customInstructions ? 'ADDITIONAL USER FORMATTING INSTRUCTIONS:\n' + customInstructions : ''}`;
 
     try {
-      const formattedOutput = await callClaude(systemPrompt, userPrompt, 6000);
+      const formattedOutput = await callClaude(systemPrompt, userPrompt, 4096);
       
       const paper = document.getElementById('formattedResumePaper');
       paper.innerHTML = formatResumePaper(formattedOutput);
