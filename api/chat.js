@@ -1,5 +1,5 @@
 // api/chat.js
-// Vercel Serverless API — Ultra-Resilient Engine with Fast 3.5s Failover & Emergency Keyless Backup
+// Vercel Serverless API — Ultra-Resilient Engine with Fast Auto-Failover & Multi-Provider Key Pool Rotation
 
 const DEFAULT_SYSTEM = `You are TalentTrack AI, an elite enterprise Talent Acquisition, Sourcing, Legal & Immigration Intelligence assistant.
 Every question is asked in a professional business context.
@@ -20,22 +20,23 @@ Never put a bullet point before Organisation: or Role:. "Organisation:" and "Rol
 
 JOB DESCRIPTION CONSISTENCY RULE: Whenever you generate a Job Description, always use exactly this structure — Job Title / Location / About the Role / Key Responsibilities / Key Skills & Qualifications / Preferred Qualifications — with "-" as the bullet character.`;
 
-const GROQ_MODELS = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile'];
-const CEREBRAS_MODELS = ['llama3.1-8b', 'llama3.3-70b'];
-const GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-2.5-flash'];
-const MISTRAL_MODELS = ['mistral-small-latest', 'open-mistral-7b'];
-const CLOUDFLARE_MODELS = ['@cf/meta/llama-3.1-8b-instruct'];
-const SAMBANOVA_MODELS = ['Meta-Llama-3.1-8B-Instruct', 'Meta-Llama-3.3-70B-Instruct'];
-const NVIDIA_MODELS = ['meta/llama-3.1-8b-instruct', 'mistralai/mixtral-8x7b-instruct-v0.1'];
+// Updated active model slugs across all supported providers
+const GROQ_MODELS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', 'gemma2-9b-it'];
+const GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-1.5-pro-latest', 'gemini-2.0-flash-exp'];
+const CEREBRAS_MODELS = ['llama-3.3-70b', 'llama3.1-8b', 'llama-4-scout-17b-16e-instruct', 'gpt-oss-120b'];
+const SAMBANOVA_MODELS = ['Meta-Llama-3.3-70B-Instruct', 'DeepSeek-V3.1'];
 const OPENROUTER_MODELS = [
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'meta-llama/llama-3.1-8b-instruct:free',
-  'qwen/qwen-2.5-72b-instruct:free',
-  'mistralai/mistral-7b-instruct:free',
+  'openrouter/free',
+  'inclusionai/ling-3.0-flash:free',
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+  'openai/gpt-oss-20b:free'
 ];
+const MISTRAL_MODELS = ['mistral-small-latest', 'open-mistral-7b'];
+const NVIDIA_MODELS = ['meta/llama-3.3-70b-instruct', 'nvidia/nemotron-4-340b-instruct', 'meta/llama-3.1-8b-instruct'];
+const CLOUDFLARE_MODELS = ['@cf/meta/llama-3.1-8b-instruct'];
 
-const GLOBAL_DEADLINE_MS = 27500;
-const BASE_ATTEMPT_TIMEOUT_MS = 3500;
+const GLOBAL_DEADLINE_MS = 28000;
+const BASE_ATTEMPT_TIMEOUT_MS = 6500;
 const MAX_ATTEMPT_TIMEOUT_MS = 19000;
 
 function computeAttemptTimeout(maxTokens) {
@@ -43,7 +44,7 @@ function computeAttemptTimeout(maxTokens) {
   return Math.min(Math.max(scaled, BASE_ATTEMPT_TIMEOUT_MS), MAX_ATTEMPT_TIMEOUT_MS);
 }
 const DEFAULT_MAX_TOKENS = 2048;
-const MAX_TOKENS_CEILING = 8000;
+const MAX_TOKENS_CEILING = 4096;
 
 const keyCooldowns = new Map();
 
@@ -57,7 +58,7 @@ function isKeyCoolingDown(key) {
   return true;
 }
 
-function setKeyCooldown(key, cooldownMs = 300000) {
+function setKeyCooldown(key, cooldownMs = 120000) {
   keyCooldowns.set(key, Date.now() + cooldownMs);
 }
 
@@ -74,11 +75,6 @@ function isSafetyLabelOnly(text) {
 function getKeys(envVal) {
   if (!envVal) return [];
   return envVal.split(',').map(k => k.trim()).filter(Boolean);
-}
-
-const LARGE_TASK_TOKEN_THRESHOLD = 3000;
-function maxKeysPerProvider(maxTokens) {
-  return maxTokens > LARGE_TASK_TOKEN_THRESHOLD ? 1 : 3;
 }
 
 function sampleKeysToTry(keys, count) {
@@ -236,11 +232,12 @@ export default async function handler(req, res) {
     const providers = [
       {
         name: 'groq',
-        keys: maxTokens > LARGE_TASK_TOKEN_THRESHOLD ? [] : groqKeys,
+        keys: groqKeys,
         run: async (key) => {
           for (const model of GROQ_MODELS) {
             if (timeLeft() < 1200) return null;
-            const { ok, status, data } = await callOpenAIStyle('https://api.groq.com/openai/v1/chat/completions', model, key, system, prompt, Math.min(computeAttemptTimeout(maxTokens), Math.max(timeLeft() - 500, 1000)), maxTokens);
+            const groqMaxTokens = Math.min(maxTokens, 4096);
+            const { ok, status, data } = await callOpenAIStyle('https://api.groq.com/openai/v1/chat/completions', model, key, system, prompt, Math.min(computeAttemptTimeout(groqMaxTokens), Math.max(timeLeft() - 500, 1000)), groqMaxTokens);
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
               if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `groq/${model}` };
@@ -286,6 +283,40 @@ export default async function handler(req, res) {
         }
       },
       {
+        name: 'sambanova',
+        keys: sambanovaKeys,
+        run: async (key) => {
+          for (const model of SAMBANOVA_MODELS) {
+            if (timeLeft() < 1200) return null;
+            const { ok, status, data } = await callOpenAIStyle('https://api.sambanova.ai/v1/chat/completions', model, key, system, prompt, Math.min(computeAttemptTimeout(maxTokens), Math.max(timeLeft() - 500, 1000)), maxTokens);
+            if (ok) {
+              const text = data?.choices?.[0]?.message?.content?.trim();
+              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `sambanova/${model}` };
+            }
+            errors.push(`SambaNova (${model}): ${data?.error?.message || 'Failed status ' + status}`);
+            if (status === 429 || status === 403 || status === 401) { setKeyCooldown(key); return null; }
+          }
+          return null;
+        }
+      },
+      {
+        name: 'openrouter',
+        keys: openrouterKeys,
+        run: async (key) => {
+          for (const model of OPENROUTER_MODELS) {
+            if (timeLeft() < 1200) return null;
+            const { ok, status, data } = await callOpenAIStyle('https://openrouter.ai/api/v1/chat/completions', model, key, system, prompt, Math.min(computeAttemptTimeout(maxTokens), Math.max(timeLeft() - 500, 1000)), maxTokens, { 'HTTP-Referer': 'https://vercel.com', 'X-Title': 'TalentTrack Smart ATS' });
+            if (ok) {
+              const text = data?.choices?.[0]?.message?.content?.trim();
+              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `openrouter/${model}` };
+            }
+            errors.push(`OpenRouter (${model}): ${data?.error?.message || 'Failed status ' + status}`);
+            if (status === 429 || status === 403 || status === 401) { setKeyCooldown(key); return null; }
+          }
+          return null;
+        }
+      },
+      {
         name: 'mistral',
         keys: mistralKeys,
         run: async (key) => {
@@ -321,40 +352,6 @@ export default async function handler(req, res) {
         }
       },
       {
-        name: 'sambanova',
-        keys: sambanovaKeys,
-        run: async (key) => {
-          for (const model of SAMBANOVA_MODELS) {
-            if (timeLeft() < 1200) return null;
-            const { ok, status, data } = await callOpenAIStyle('https://api.sambanova.ai/v1/chat/completions', model, key, system, prompt, Math.min(computeAttemptTimeout(maxTokens), Math.max(timeLeft() - 500, 1000)), maxTokens);
-            if (ok) {
-              const text = data?.choices?.[0]?.message?.content?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `sambanova/${model}` };
-            }
-            errors.push(`SambaNova (${model}): ${data?.error?.message || 'Failed status ' + status}`);
-            if (status === 429 || status === 403 || status === 401) { setKeyCooldown(key); return null; }
-          }
-          return null;
-        }
-      },
-      {
-        name: 'openrouter',
-        keys: openrouterKeys,
-        run: async (key) => {
-          for (const model of OPENROUTER_MODELS) {
-            if (timeLeft() < 1200) return null;
-            const { ok, status, data } = await callOpenAIStyle('https://openrouter.ai/api/v1/chat/completions', model, key, system, prompt, Math.min(computeAttemptTimeout(maxTokens), Math.max(timeLeft() - 500, 1000)), maxTokens, { 'HTTP-Referer': 'https://vercel.com', 'X-Title': 'TalentTrack Smart ATS' });
-            if (ok) {
-              const text = data?.choices?.[0]?.message?.content?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `openrouter/${model}` };
-            }
-            errors.push(`OpenRouter (${model}): ${data?.error?.message || 'Failed status ' + status}`);
-            if (status === 429 || status === 403 || status === 401) { setKeyCooldown(key); return null; }
-          }
-          return null;
-        }
-      },
-      {
         name: 'nvidia',
         keys: nvidiaKeys,
         run: async (key) => {
@@ -373,7 +370,7 @@ export default async function handler(req, res) {
       }
     ];
 
-    const keysPerProvider = maxKeysPerProvider(maxTokens);
+    const keysPerProvider = 5;
     for (const provider of providers) {
       if (provider.keys.length === 0) continue;
       if (timeLeft() < 1200) break;
@@ -389,7 +386,7 @@ export default async function handler(req, res) {
     }
 
     if (timeLeft() > 2000) {
-      const emergencyRes = await callEmergencyKeylessFallback(system, prompt, Math.min(5000, timeLeft() - 500));
+      const emergencyRes = await callEmergencyKeylessFallback(system, prompt, Math.min(6000, timeLeft() - 500));
       if (emergencyRes) {
         res.status(200).json({ ...emergencyRes, activeKeys, elapsedMs: Date.now() - startTime, emergencyFallbackUsed: true });
         return;
