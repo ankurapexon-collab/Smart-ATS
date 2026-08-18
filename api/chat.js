@@ -1,5 +1,5 @@
 // api/chat.js
-// Vercel Serverless API — Ultra-Resilient Engine with Fast Auto-Failover & Multi-Provider Key Pool Rotation
+// Vercel Serverless API — Ultra-Resilient Engine with Auto-Failover & Multi-Provider Rotation
 
 const DEFAULT_SYSTEM = `You are TalentTrack AI, an elite enterprise Talent Acquisition, Sourcing, Legal & Immigration Intelligence assistant.
 Every question is asked in a professional business context.
@@ -20,19 +20,14 @@ Never put a bullet point before Organisation: or Role:. "Organisation:" and "Rol
 
 JOB DESCRIPTION CONSISTENCY RULE: Whenever you generate a Job Description, always use exactly this structure — Job Title / Location / About the Role / Key Responsibilities / Key Skills & Qualifications / Preferred Qualifications — with "-" as the bullet character.`;
 
-// Updated active model slugs across all supported providers
-const GROQ_MODELS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', 'gemma2-9b-it'];
-const GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-1.5-pro-latest', 'gemini-2.0-flash-exp'];
-const CEREBRAS_MODELS = ['llama-3.3-70b', 'llama3.1-8b', 'llama-4-scout-17b-16e-instruct', 'gpt-oss-120b'];
-const SAMBANOVA_MODELS = ['Meta-Llama-3.3-70B-Instruct', 'DeepSeek-V3.1'];
-const OPENROUTER_MODELS = [
-  'openrouter/free',
-  'inclusionai/ling-3.0-flash:free',
-  'nvidia/nemotron-3-ultra-550b-a55b:free',
-  'openai/gpt-oss-20b:free'
-];
+// Active model slugs across all supported providers
+const GROQ_MODELS = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'llama-3.3-70b-specdec', 'llama3-70b-8192'];
+const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-pro-latest'];
+const CEREBRAS_MODELS = ['gpt-oss-120b', 'llama-3.3-70b', 'llama3.1-8b'];
+const SAMBANOVA_MODELS = ['Meta-Llama-3.3-70B-Instruct', 'DeepSeek-R1-Distill-Llama-70B'];
+const OPENROUTER_MODELS = ['openrouter/free', 'openai/gpt-oss-20b:free', 'meta-llama/llama-3.3-70b-instruct'];
 const MISTRAL_MODELS = ['mistral-small-latest', 'open-mistral-7b'];
-const NVIDIA_MODELS = ['meta/llama-3.3-70b-instruct', 'nvidia/nemotron-4-340b-instruct', 'meta/llama-3.1-8b-instruct'];
+const NVIDIA_MODELS = ['meta/llama-3.3-70b-instruct', 'z-ai/glm-4.7', 'nvidia/nemotron-4-340b-instruct', 'meta/llama-3.1-8b-instruct'];
 const CLOUDFLARE_MODELS = ['@cf/meta/llama-3.1-8b-instruct'];
 
 const GLOBAL_DEADLINE_MS = 28000;
@@ -283,17 +278,17 @@ export default async function handler(req, res) {
         }
       },
       {
-        name: 'sambanova',
-        keys: sambanovaKeys,
+        name: 'nvidia',
+        keys: nvidiaKeys,
         run: async (key) => {
-          for (const model of SAMBANOVA_MODELS) {
+          for (const model of NVIDIA_MODELS) {
             if (timeLeft() < 1200) return null;
-            const { ok, status, data } = await callOpenAIStyle('https://api.sambanova.ai/v1/chat/completions', model, key, system, prompt, Math.min(computeAttemptTimeout(maxTokens), Math.max(timeLeft() - 500, 1000)), maxTokens);
+            const { ok, status, data } = await callOpenAIStyle('https://integrate.api.nvidia.com/v1/chat/completions', model, key, system, prompt, Math.min(computeAttemptTimeout(maxTokens), Math.max(timeLeft() - 500, 1000)), maxTokens);
             if (ok) {
               const text = data?.choices?.[0]?.message?.content?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `sambanova/${model}` };
+              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `nvidia/${model}` };
             }
-            errors.push(`SambaNova (${model}): ${data?.error?.message || 'Failed status ' + status}`);
+            errors.push(`NVIDIA (${model}): ${data?.error?.message || 'Failed status ' + status}`);
             if (status === 429 || status === 403 || status === 401) { setKeyCooldown(key); return null; }
           }
           return null;
@@ -311,6 +306,23 @@ export default async function handler(req, res) {
               if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `openrouter/${model}` };
             }
             errors.push(`OpenRouter (${model}): ${data?.error?.message || 'Failed status ' + status}`);
+            if (status === 429 || status === 403 || status === 401) { setKeyCooldown(key); return null; }
+          }
+          return null;
+        }
+      },
+      {
+        name: 'sambanova',
+        keys: sambanovaKeys,
+        run: async (key) => {
+          for (const model of SAMBANOVA_MODELS) {
+            if (timeLeft() < 1200) return null;
+            const { ok, status, data } = await callOpenAIStyle('https://api.sambanova.ai/v1/chat/completions', model, key, system, prompt, Math.min(computeAttemptTimeout(maxTokens), Math.max(timeLeft() - 500, 1000)), maxTokens);
+            if (ok) {
+              const text = data?.choices?.[0]?.message?.content?.trim();
+              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `sambanova/${model}` };
+            }
+            errors.push(`SambaNova (${model}): ${data?.error?.message || 'Failed status ' + status}`);
             if (status === 429 || status === 403 || status === 401) { setKeyCooldown(key); return null; }
           }
           return null;
@@ -346,23 +358,6 @@ export default async function handler(req, res) {
               if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `cloudflare/${model}` };
             }
             errors.push(`Cloudflare (${model}): ${data?.error?.message || 'Failed status ' + status}`);
-            if (status === 429 || status === 403 || status === 401) { setKeyCooldown(key); return null; }
-          }
-          return null;
-        }
-      },
-      {
-        name: 'nvidia',
-        keys: nvidiaKeys,
-        run: async (key) => {
-          for (const model of NVIDIA_MODELS) {
-            if (timeLeft() < 1200) return null;
-            const { ok, status, data } = await callOpenAIStyle('https://integrate.api.nvidia.com/v1/chat/completions', model, key, system, prompt, Math.min(computeAttemptTimeout(maxTokens), Math.max(timeLeft() - 500, 1000)), maxTokens);
-            if (ok) {
-              const text = data?.choices?.[0]?.message?.content?.trim();
-              if (text && !isSafetyLabelOnly(text)) return { text, modelUsed: `nvidia/${model}` };
-            }
-            errors.push(`NVIDIA (${model}): ${data?.error?.message || 'Failed status ' + status}`);
             if (status === 429 || status === 403 || status === 401) { setKeyCooldown(key); return null; }
           }
           return null;
